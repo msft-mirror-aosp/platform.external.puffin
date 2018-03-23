@@ -14,10 +14,10 @@
 #include "puffin/src/memory_stream.h"
 #include "puffin/src/unittest_common.h"
 
-namespace puffin {
-
 using std::string;
 using std::vector;
+
+namespace puffin {
 
 namespace {
 const uint8_t kZipEntries[] = {
@@ -79,9 +79,9 @@ const uint8_t kGzipEntryWithExtraField[] = {
 
 // echo "0123456789" | zlib-flate -compress |
 // hexdump -v -e '12/1 "0x%02x, " "\n"'
-const uint8_t kZlibEntry[] = {
-    0x78, 0x9c, 0x33, 0x30, 0x34, 0x32, 0x36, 0x31, 0x35, 0x33, 0xb7, 0xb0,
-    0xe4, 0x02, 0x00, 0x0d, 0x17, 0x02, 0x18};
+const uint8_t kZlibEntry[] = {0x78, 0x9c, 0x33, 0x30, 0x34, 0x32, 0x36,
+                              0x31, 0x35, 0x33, 0xb7, 0xb0, 0xe4, 0x02,
+                              0x00, 0x0d, 0x17, 0x02, 0x18};
 
 void FindDeflatesInZlibBlocks(const Buffer& src,
                               const vector<ByteExtent>& zlibs,
@@ -114,13 +114,13 @@ void CheckFindPuffLocation(const Buffer& compressed,
 
 // Test Simple Puffing of the source.
 TEST(UtilsTest, FindPuffLocations1Test) {
-  CheckFindPuffLocation(kDeflates8, kSubblockDeflateExtents8, kPuffExtents8,
-                        kPuffs8.size());
+  CheckFindPuffLocation(kDeflatesSample1, kSubblockDeflateExtentsSample1,
+                        kPuffExtentsSample1, kPuffsSample1.size());
 }
 
 TEST(UtilsTest, FindPuffLocations2Test) {
-  CheckFindPuffLocation(kDeflates9, kSubblockDeflateExtents9, kPuffExtents9,
-                        kPuffs9.size());
+  CheckFindPuffLocation(kDeflatesSample2, kSubblockDeflateExtentsSample2,
+                        kPuffExtentsSample2, kPuffsSample2.size());
 }
 
 TEST(UtilsTest, LocateDeflatesInZlib) {

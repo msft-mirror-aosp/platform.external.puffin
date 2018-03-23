@@ -13,21 +13,21 @@
 #include <string>
 
 #include "puffin/src/bit_reader.h"
+#include "puffin/src/logging.h"
 #include "puffin/src/puff_writer.h"
-#include "puffin/src/set_errors.h"
-
-namespace puffin {
-namespace sample_generator {
 
 using std::cerr;
 using std::cout;
 using std::endl;
 using std::string;
 
+namespace puffin {
+namespace sample_generator {
+
 bool CompressToDeflate(const Buffer& uncomp,
-                      Buffer* comp,
-                      int compression,
-                      int strategy) {
+                       Buffer* comp,
+                       int compression,
+                       int strategy) {
   z_stream stream;
   stream.next_in = (z_const Bytef*)uncomp.data();
   stream.avail_in = static_cast<unsigned int>(uncomp.size());
@@ -77,12 +77,11 @@ bool PrintSample(Puffer* puffer,
   PrintArray("compressed", comp);
 
   Buffer puff(original.size() * 3 + 10);
-  puffin::Error error;
 
   BufferBitReader bit_reader(comp.data(), comp.size());
   BufferPuffWriter puff_writer(puff.data(), puff.size());
   TEST_AND_RETURN_FALSE(
-      puffer->PuffDeflate(&bit_reader, &puff_writer, nullptr, &error));
+      puffer->PuffDeflate(&bit_reader, &puff_writer, nullptr));
   TEST_AND_RETURN_FALSE(comp.size() == bit_reader.Offset());
 
   puff.resize(puff_writer.Size());

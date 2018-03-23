@@ -19,14 +19,14 @@
 #include "puffin/src/include/puffin/huffer.h"
 #include "puffin/src/include/puffin/puffer.h"
 #include "puffin/src/include/puffin/stream.h"
+#include "puffin/src/logging.h"
 #include "puffin/src/puffin.pb.h"
 #include "puffin/src/puffin_stream.h"
-#include "puffin/src/set_errors.h"
-
-namespace puffin {
 
 using std::string;
 using std::vector;
+
+namespace puffin {
 
 const char kMagic[] = "PUF1";
 const size_t kMagicLength = 4;
@@ -160,9 +160,9 @@ bool PuffPatch(UniqueStreamPtr src,
           std::move(dst), huffer, dst_puff_size, dst_deflates, dst_puffs)));
 
   // Running bspatch itself.
-  TEST_AND_RETURN_FALSE(
-      0 ==
-      bspatch(reader, writer, &patch[bsdiff_patch_offset], bsdiff_patch_size));
+  TEST_AND_RETURN_FALSE(0 == bspatch(reader, writer,
+                                     &patch[bsdiff_patch_offset],
+                                     bsdiff_patch_size));
   return true;
 }
 

@@ -14,11 +14,13 @@
 #include "puffin/src/bit_reader.h"
 #include "puffin/src/file_stream.h"
 #include "puffin/src/include/puffin/common.h"
-#include "puffin/src/include/puffin/errors.h"
 #include "puffin/src/include/puffin/puffer.h"
+#include "puffin/src/logging.h"
 #include "puffin/src/memory_stream.h"
 #include "puffin/src/puff_writer.h"
-#include "puffin/src/set_errors.h"
+
+using std::string;
+using std::vector;
 
 namespace {
 // Use memcpy to access the unaligned data of type |T|.
@@ -76,17 +78,6 @@ bool CalculateSizeOfDeflateBlock(const puffin::Buffer& data,
 
 namespace puffin {
 
-using std::string;
-using std::vector;
-
-uint64_t BytesInByteExtents(const vector<ByteExtent>& extents) {
-  uint64_t bytes = 0;
-  for (const auto& extent : extents) {
-    bytes += extent.length;
-  }
-  return bytes;
-}
-
 // This function uses RFC1950 (https://www.ietf.org/rfc/rfc1950.txt) for the
 // definition of a zlib stream.  For finding the deflate blocks, we relying on
 // the proper size of the zlib stream in |data|. Basically the size of the zlib
@@ -137,10 +128,9 @@ bool FindDeflateSubBlocks(const UniqueStreamPtr& src,
     // Find all the subblocks.
     BufferBitReader bit_reader(deflate_buffer.data(), deflate.length);
     BufferPuffWriter puff_writer(nullptr, 0);
-    Error error;
     vector<BitExtent> subblocks;
     TEST_AND_RETURN_FALSE(
-        puffer.PuffDeflate(&bit_reader, &puff_writer, &subblocks, &error));
+        puffer.PuffDeflate(&bit_reader, &puff_writer, &subblocks));
     TEST_AND_RETURN_FALSE(deflate.length == bit_reader.Offset());
     for (const auto& subblock : subblocks) {
       subblock_deflates->emplace_back(subblock.offset + deflate.offset * 8,
@@ -366,9 +356,8 @@ bool FindPuffLocations(const UniqueStreamPtr& src,
     bit_reader.DropBits(bits_to_skip);
 
     BufferPuffWriter puff_writer(nullptr, 0);
-    Error error;
     TEST_AND_RETURN_FALSE(
-        puffer.PuffDeflate(&bit_reader, &puff_writer, nullptr, &error));
+        puffer.PuffDeflate(&bit_reader, &puff_writer, nullptr));
     TEST_AND_RETURN_FALSE(deflate_buffer.size() == bit_reader.Offset());
 
     // 1 if a deflate ends at the same byte that the next deflate starts and
