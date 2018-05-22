@@ -164,6 +164,9 @@ bool FindDeflateSubBlocks(const UniqueStreamPtr& src,
 
     // Find all the subblocks.
     BufferBitReader bit_reader(deflate_buffer.data(), deflate.length);
+    // The uncompressed blocks will be ignored since we are passing a null
+    // buffered puff writer and a valid deflate locations output array. This
+    // should not happen in the puffdiff or anywhere else by default.
     BufferPuffWriter puff_writer(nullptr, 0);
     vector<BitExtent> subblocks;
     TEST_AND_RETURN_FALSE(

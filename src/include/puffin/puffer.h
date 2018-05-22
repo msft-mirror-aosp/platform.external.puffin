@@ -22,8 +22,13 @@ class PUFFIN_EXPORT Puffer {
   Puffer();
   ~Puffer();
 
-  // Creates a puffed buffer from a deflate buffer. If |deflates| is not null,
-  // it will be populated with the location of subblocks in the input data.
+  // Creates a puffed buffer from a deflate buffer.
+  //
+  // If |deflates| is not null, it will be populated with the location of the
+  // subblocks in the input data. In addition, the uncompressed deflate blocks
+  // will be ignored and will not be added to the |deflates|. For this case to
+  // happen correctly, the |pw| should write into an empty/null buffer,
+  // otherwise the created puff stream, will not match the deflate stream.
   bool PuffDeflate(BitReaderInterface* br,
                    PuffWriterInterface* pw,
                    std::vector<BitExtent>* deflates) const;
