@@ -88,10 +88,9 @@ bool Puffer::PuffDeflate(BitReaderInterface* br,
         pd.type = PuffData::Type::kEndOfBlock;
         TEST_AND_RETURN_FALSE(pw->Insert(pd));
 
-        if (deflates != nullptr) {
-          deflates->emplace_back(start_bit_offset,
-                                 br->OffsetInBits() - start_bit_offset);
-        }
+        // There is no need to insert the location of uncompressed deflates
+        // because we do not want the uncompressed blocks when trying to find
+        // the bit-addressed location of deflates. They better be ignored.
 
         // continue the loop. Do not read any literal/length/distance.
         continue;

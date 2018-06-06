@@ -263,6 +263,31 @@ TEST_F(PuffinTest, FixedHuffmanTableCompressedTest) {
   CheckSample(kRaw5, kDeflate, kPuff);
 }
 
+TEST_F(PuffinTest, NoIgnoreUncompressedBlocksTest) {
+  Buffer uncomp_deflate = {0x01, 0x05, 0x00, 0xFA, 0xFF,
+                           0x01, 0x02, 0x03, 0x04, 0x05};
+  BufferBitReader bit_reader(uncomp_deflate.data(), uncomp_deflate.size());
+  Buffer puff_buffer(11);  // Same size as |uncomp_puff| below.
+  BufferPuffWriter puff_writer(puff_buffer.data(), puff_buffer.size());
+  vector<BitExtent> deflates;
+  EXPECT_TRUE(puffer_.PuffDeflate(&bit_reader, &puff_writer, nullptr));
+  Buffer uncomp_puff = {0x00, 0x00, 0x80, 0x04, 0x01, 0x02,
+                        0x03, 0x04, 0x05, 0xFF, 0x81};
+  EXPECT_EQ(puff_writer.Size(), uncomp_puff.size());
+  EXPECT_EQ(puff_buffer, uncomp_puff);
+}
+
+TEST_F(PuffinTest, IgnoreUncompressedBlocksTest) {
+  Buffer uncomp_deflate = {0x01, 0x05, 0x00, 0xFA, 0xFF,
+                           0x01, 0x02, 0x03, 0x04, 0x05};
+  BufferBitReader bit_reader(uncomp_deflate.data(), uncomp_deflate.size());
+  BufferPuffWriter puff_writer(nullptr, 0);
+  vector<BitExtent> deflates;
+  EXPECT_TRUE(puffer_.PuffDeflate(&bit_reader, &puff_writer, &deflates));
+  vector<BitExtent> empty;
+  EXPECT_EQ(deflates, empty);
+}
+
 namespace {
 // It is actuall the content of the copyright header.
 const Buffer kDynamicHTRaw = {
@@ -558,12 +583,5 @@ TEST_F(PuffinTest, IgnoreDeflateSizeTest) {
       kGapPuffs.size(), kGapSubblockDeflateExtents, kGapPuffExtents,
       /*ignore_deflate_size=*/false));
 }
-
-// TODO(ahassani): add tests for:
-//   TestPatchingEmptyTo9
-//   TestPatchingNoDeflateTo9
-
-// TODO(ahassani): Change tests data if you decided to compress the header of
-// the patch.
 
 }  // namespace puffin
