@@ -19,7 +19,6 @@
 #include "puffin/src/puff_reader.h"
 #include "puffin/src/puff_writer.h"
 #include "puffin/src/puffin_stream.h"
-#include "puffin/src/sample_generator.h"
 #include "puffin/src/unittest_common.h"
 
 using std::string;
