@@ -97,6 +97,15 @@ void FuzzPuffPatch(const uint8_t* data, size_t size) {
       TestExtentsArrayForFuzzer(src_puffs) &&
       TestExtentsArrayForFuzzer(dst_puffs)) {
     const size_t kBufferSize = 1000;
+    if ((!src_deflates.empty() &&
+         kBufferSize <
+             src_deflates.back().offset + src_deflates.back().length) ||
+        (!dst_deflates.empty() &&
+         kBufferSize <
+             dst_deflates.back().offset + dst_deflates.back().length)) {
+      return;
+    }
+
     Buffer src_buffer(kBufferSize);
     Buffer dst_buffer(kBufferSize);
     auto src = MemoryStream::CreateForRead(src_buffer);
