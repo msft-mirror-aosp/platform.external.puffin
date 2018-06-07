@@ -28,7 +28,9 @@ class PUFFIN_EXPORT Puffer {
   // subblocks in the input data. In addition, the uncompressed deflate blocks
   // will be ignored and will not be added to the |deflates|. For this case to
   // happen correctly, the |pw| should write into an empty/null buffer,
-  // otherwise the created puff stream, will not match the deflate stream.
+  // otherwise the created puff stream, will not match the deflate stream. In
+  // addition, in this case, the function will return when it reaches a final
+  // deflate subblock.
   bool PuffDeflate(BitReaderInterface* br,
                    PuffWriterInterface* pw,
                    std::vector<BitExtent>* deflates) const;
