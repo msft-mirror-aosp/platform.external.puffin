@@ -496,6 +496,19 @@ TEST_F(PuffinTest, MultipleDeflateBufferBothFinalBitTest) {
   CheckSample(kRaw2, kDeflate, kPuff);
 }
 
+// When locating deflates, the puffer has to end when it hit a final block. Test
+// that with two deflate buffers concatenated and both have final bits set.
+TEST_F(PuffinTest, EndOnFinalBitTest) {
+  const Buffer kDeflate = {0x63, 0x04, 0x8C, 0x11, 0x00};
+  BufferBitReader bit_reader(kDeflate.data(), kDeflate.size());
+  BufferPuffWriter puff_writer(nullptr, 0);
+  vector<BitExtent> deflates;
+  EXPECT_TRUE(puffer_.PuffDeflate(&bit_reader, &puff_writer, &deflates));
+  const vector<BitExtent> kExpectedDeflates = {{0, 18}};
+  EXPECT_EQ(deflates, kExpectedDeflates);
+  EXPECT_EQ(bit_reader.Offset(), 3);
+}
+
 // TODO(ahassani): Add unittests for Failhuff too.
 
 namespace {

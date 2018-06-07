@@ -91,7 +91,7 @@ FileType StringToFileType(const string& file_type) {
 bool LocateDeflatesBasedOnFileType(const UniqueStreamPtr& stream,
                                    const string& file_name,
                                    const string& file_type_to_override,
-                                   vector<ByteExtent>* deflates) {
+                                   vector<BitExtent>* deflates) {
   auto file_type = FileType::kUnknown;
 
   auto last_dot = file_name.find_last_of(".");
@@ -124,15 +124,13 @@ bool LocateDeflatesBasedOnFileType(const UniqueStreamPtr& stream,
 
   uint64_t stream_size;
   TEST_AND_RETURN_FALSE(stream->GetSize(&stream_size));
-  if (file_type == FileType::kDeflate) {
-    // Assume the whole stream is a deflate block.
-    *deflates = {ByteExtent(0, stream_size)};
-    return true;
-  }
-
   Buffer data(stream_size);
   TEST_AND_RETURN_FALSE(stream->Read(data.data(), data.size()));
   switch (file_type) {
+    case FileType::kDeflate:
+      TEST_AND_RETURN_FALSE(puffin::LocateDeflatesInDeflateStream(
+          data.data(), data.size(), 0, deflates, nullptr));
+      break;
     case FileType::kZlib:
       TEST_AND_RETURN_FALSE(puffin::LocateDeflatesInZlib(data, deflates));
       break;
@@ -230,7 +228,7 @@ bool Main(int argc, char** argv) {
 
   if (FLAGS_operation == "puff" || FLAGS_operation == "puffhuff") {
     TEST_AND_RETURN_FALSE(LocateDeflatesBasedOnFileType(
-        src_stream, FLAGS_src_file, FLAGS_src_file_type, &src_deflates_byte));
+        src_stream, FLAGS_src_file, FLAGS_src_file_type, &src_deflates_bit));
 
     if (src_deflates_bit.empty() && src_deflates_byte.empty()) {
       LOG(WARNING) << "You should pass source deflates, is this intentional?";
@@ -319,9 +317,9 @@ bool Main(int argc, char** argv) {
     TEST_AND_RETURN_FALSE(dst_stream);
 
     TEST_AND_RETURN_FALSE(LocateDeflatesBasedOnFileType(
-        src_stream, FLAGS_src_file, FLAGS_src_file_type, &src_deflates_byte));
+        src_stream, FLAGS_src_file, FLAGS_src_file_type, &src_deflates_bit));
     TEST_AND_RETURN_FALSE(LocateDeflatesBasedOnFileType(
-        dst_stream, FLAGS_dst_file, FLAGS_dst_file_type, &dst_deflates_byte));
+        dst_stream, FLAGS_dst_file, FLAGS_dst_file_type, &dst_deflates_bit));
 
     if (src_deflates_bit.empty() && src_deflates_byte.empty()) {
       LOG(WARNING) << "You should pass source deflates, is this intentional?";
