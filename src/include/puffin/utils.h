@@ -25,32 +25,45 @@ PUFFIN_EXPORT std::string ExtentsToString(const T& extents) {
   return str;
 }
 
-// Locates deflate locations for a zlib buffer |data|. It locates by removing
-// header and footer bytes from the zlib stream.
-bool LocateDeflatesInZlib(const Buffer& data,
-                          std::vector<ByteExtent>* deflate_blocks);
+// Locates deflates in a deflate stream |data| with estimated minimum length of
+// |size|. The data should start with a valid deflate stream otherwise, false is
+// returned. |virtual_offset| defines the offset the |data| starts in the
+// original deflate stream. It is used to calculate the location of deflates in
+// |deflates| based on the given offset. |compressed_size| is the size of the
+// input that was determined to have valid deflate blocks (including
+// uncompressed blocks). This function does not clear the content of |deflates|
+// and will append found deflates to the end of it.
+bool LocateDeflatesInDeflateStream(const uint8_t* data,
+                                   uint64_t size,
+                                   uint64_t virtual_offset,
+                                   std::vector<BitExtent>* deflates,
+                                   uint64_t* compressed_size);
 
-// Similar to the function above, except that it accepts the file path to the
-// source and a list of zlib blocks and returns the deflate addresses in bit
-// extents.
+// Locates deflates in a zlib buffer |data| by removing header and footer bytes
+// from the zlib stream.
+bool LocateDeflatesInZlib(const Buffer& data, std::vector<BitExtent>* deflates);
+
+// Uses the function above, to locate deflates (bit addressed) in a given file
+// |file_path| using the list of zlib blocks |zlibs|.
 PUFFIN_EXPORT
 bool LocateDeflatesInZlibBlocks(const std::string& file_path,
                                 const std::vector<ByteExtent>& zlibs,
                                 std::vector<BitExtent>* deflates);
 
-// Searches for deflate locations in a gzip file. The results are
-// saved in |deflate_blocks|.
-bool LocateDeflatesInGzip(const Buffer& data,
-                          std::vector<ByteExtent>* deflate_blocks);
+// Searches for deflate locations in a gzip stream. The results are saved in
+// |deflates|.
+bool LocateDeflatesInGzip(const Buffer& data, std::vector<BitExtent>* deflates);
 
-// Search for the deflates in a zip archive, and put the result in
-// |deflate_blocks|.
-bool LocateDeflatesInZipArchive(const Buffer& data,
-                                std::vector<ByteExtent>* deflate_blocks);
-
+// Search for the deflates in a zip archive, and put the result in |deflates|.
 PUFFIN_EXPORT
+bool LocateDeflatesInZipArchive(const Buffer& data,
+                                std::vector<BitExtent>* deflates);
+
 // Create a list of deflate subblock locations from the deflate blocks in a
 // zip archive.
+// TODO(ahassani): Remove this function once update_engine starts to use
+// LocateDeflatesInZipArchive()
+PUFFIN_EXPORT
 bool LocateDeflateSubBlocksInZipArchive(const Buffer& data,
                                         std::vector<BitExtent>* deflates);
 

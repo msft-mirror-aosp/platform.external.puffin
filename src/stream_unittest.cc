@@ -218,8 +218,7 @@ TEST_F(StreamTest, PuffinStreamTest) {
   shared_ptr<Huffer> huffer(new Huffer());
   auto write_stream = PuffinStream::CreateForHuff(
       MemoryStream::CreateForWrite(&buf), huffer, kPuffsSample1.size(),
-      kSubblockDeflateExtentsSample1, kPuffExtentsSample1,
-      /*ignore_deflate_size=*/false);
+      kSubblockDeflateExtentsSample1, kPuffExtentsSample1);
 
   ASSERT_TRUE(write_stream->Seek(0));
   for (size_t idx = 0; idx < kPuffsSample1.size(); idx++) {

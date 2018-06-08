@@ -212,8 +212,7 @@ class PuffinTest : public ::testing::Test {
 
     src_puffin_stream =
         PuffinStream::CreateForHuff(std::move(deflate_stream), huffer,
-                                    puff_size, deflate_extents, puff_extents,
-                                    /*ignore_deflate_size=*/true);
+                                    puff_size, deflate_extents, puff_extents);
 
     ASSERT_TRUE(
         src_puffin_stream->Write(puff_buffer.data(), puff_buffer.size()));
@@ -261,6 +260,34 @@ TEST_F(PuffinTest, FixedHuffmanTableCompressedTest) {
   const Buffer kPuff = {0x00, 0x00, 0xA0, 0x04, 0x01, 0x02,
                         0x03, 0x04, 0x05, 0xFF, 0x81};
   CheckSample(kRaw5, kDeflate, kPuff);
+}
+
+// Tests that uncompressed deflate blocks are not ignored when the output
+// deflate location pointer is null.
+TEST_F(PuffinTest, NoIgnoreUncompressedBlocksTest) {
+  const Buffer kDeflate = {0x01, 0x05, 0x00, 0xFA, 0xFF,
+                           0x01, 0x02, 0x03, 0x04, 0x05};
+  BufferBitReader bit_reader(kDeflate.data(), kDeflate.size());
+  Buffer puff_buffer(11);  // Same size as |uncomp_puff| below.
+  BufferPuffWriter puff_writer(puff_buffer.data(), puff_buffer.size());
+  vector<BitExtent> deflates;
+  EXPECT_TRUE(puffer_.PuffDeflate(&bit_reader, &puff_writer, nullptr));
+  const Buffer kPuff = {0x00, 0x00, 0x80, 0x04, 0x01, 0x02,
+                        0x03, 0x04, 0x05, 0xFF, 0x81};
+  EXPECT_EQ(puff_writer.Size(), kPuff.size());
+  EXPECT_EQ(puff_buffer, kPuff);
+}
+
+// Tests that uncompressed deflate blocks are ignored when the output
+// deflate location pointer is valid.
+TEST_F(PuffinTest, IgnoreUncompressedBlocksTest) {
+  const Buffer kDeflate = {0x01, 0x05, 0x00, 0xFA, 0xFF,
+                           0x01, 0x02, 0x03, 0x04, 0x05};
+  BufferBitReader bit_reader(kDeflate.data(), kDeflate.size());
+  BufferPuffWriter puff_writer(nullptr, 0);
+  vector<BitExtent> deflates;
+  EXPECT_TRUE(puffer_.PuffDeflate(&bit_reader, &puff_writer, &deflates));
+  EXPECT_TRUE(deflates.empty());
 }
 
 namespace {
@@ -468,6 +495,19 @@ TEST_F(PuffinTest, MultipleDeflateBufferBothFinalBitTest) {
   CheckSample(kRaw2, kDeflate, kPuff);
 }
 
+// When locating deflates, the puffer has to end when it hit a final block. Test
+// that with two deflate buffers concatenated and both have final bits set.
+TEST_F(PuffinTest, EndOnFinalBitTest) {
+  const Buffer kDeflate = {0x63, 0x04, 0x8C, 0x11, 0x00};
+  BufferBitReader bit_reader(kDeflate.data(), kDeflate.size());
+  BufferPuffWriter puff_writer(nullptr, 0);
+  vector<BitExtent> deflates;
+  EXPECT_TRUE(puffer_.PuffDeflate(&bit_reader, &puff_writer, &deflates));
+  const vector<BitExtent> kExpectedDeflates = {{0, 18}};
+  EXPECT_EQ(deflates, kExpectedDeflates);
+  EXPECT_EQ(bit_reader.Offset(), 3);
+}
+
 // TODO(ahassani): Add unittests for Failhuff too.
 
 namespace {
@@ -533,37 +573,5 @@ TEST_F(PuffinTest, BitExtentPuffAndHuffTest) {
   CheckBitExtentsPuffAndHuff(kGapDeflates, kGapSubblockDeflateExtents,
                              kGapPuffs, kGapPuffExtents);
 }
-
-TEST_F(PuffinTest, IgnoreDeflateSizeTest) {
-  std::shared_ptr<Huffer> huffer(new Huffer());
-  Buffer out_deflate_buffer;
-  EXPECT_FALSE(PuffinStream::CreateForHuff(
-      MemoryStream::CreateForWrite(&out_deflate_buffer), huffer,
-      kGapPuffs.size(), kGapSubblockDeflateExtents, kGapPuffExtents,
-      /*ignore_deflate_size=*/false));
-
-  EXPECT_TRUE(PuffinStream::CreateForHuff(
-      MemoryStream::CreateForWrite(&out_deflate_buffer), huffer,
-      kGapPuffs.size(), kGapSubblockDeflateExtents, kGapPuffExtents,
-      /*ignore_deflate_size=*/true));
-
-  out_deflate_buffer.resize(kGapDeflates.size());
-  EXPECT_TRUE(PuffinStream::CreateForHuff(
-      MemoryStream::CreateForWrite(&out_deflate_buffer), huffer,
-      kGapPuffs.size(), kGapSubblockDeflateExtents, kGapPuffExtents,
-      /*ignore_deflate_size=*/true));
-
-  EXPECT_TRUE(PuffinStream::CreateForHuff(
-      MemoryStream::CreateForWrite(&out_deflate_buffer), huffer,
-      kGapPuffs.size(), kGapSubblockDeflateExtents, kGapPuffExtents,
-      /*ignore_deflate_size=*/false));
-}
-
-// TODO(ahassani): add tests for:
-//   TestPatchingEmptyTo9
-//   TestPatchingNoDeflateTo9
-
-// TODO(ahassani): Change tests data if you decided to compress the header of
-// the patch.
 
 }  // namespace puffin

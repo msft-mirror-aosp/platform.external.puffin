@@ -32,10 +32,11 @@ bool Puffer::PuffDeflate(BitReaderInterface* br,
                          vector<BitExtent>* deflates) const {
   PuffData pd;
   HuffmanTable* cur_ht;
+  bool end_loop = false;
   // No bits left to read, return. We try to cache at least eight bits because
   // the minimum length of a deflate bit stream is 8: (fixed huffman table) 3
   // bits header + 5 bits just one len/dist symbol.
-  while (br->CacheBits(8)) {
+  while (!end_loop && br->CacheBits(8)) {
     auto start_bit_offset = br->OffsetInBits();
 
     TEST_AND_RETURN_FALSE(br->CacheBits(3));
@@ -45,6 +46,12 @@ bool Puffer::PuffDeflate(BitReaderInterface* br,
     br->DropBits(2);
     DVLOG(2) << "Read block type: "
              << BlockTypeToString(static_cast<BlockType>(type));
+
+    // If it is the final block and we are just looking for deflate locations,
+    // we consider this the end of the search.
+    if (deflates != nullptr && final_bit) {
+      end_loop = true;
+    }
 
     // Header structure
     // +-+-+-+-+-+-+-+-+
@@ -88,10 +95,9 @@ bool Puffer::PuffDeflate(BitReaderInterface* br,
         pd.type = PuffData::Type::kEndOfBlock;
         TEST_AND_RETURN_FALSE(pw->Insert(pd));
 
-        if (deflates != nullptr) {
-          deflates->emplace_back(start_bit_offset,
-                                 br->OffsetInBits() - start_bit_offset);
-        }
+        // There is no need to insert the location of uncompressed deflates
+        // because we do not want the uncompressed blocks when trying to find
+        // the bit-addressed location of deflates. They better be ignored.
 
         // continue the loop. Do not read any literal/length/distance.
         continue;
