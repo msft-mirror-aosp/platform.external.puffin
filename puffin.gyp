@@ -22,7 +22,6 @@
     'defines': [
       'USE_BRILLO=1',
       '_FILE_OFFSET_BITS=64',
-      'ZLIB_CONST',
     ],
   },
   'targets': [
@@ -93,11 +92,6 @@
         'libpuffpatch-static',
       ],
       'all_dependent_settings': {
-        'variables': {
-          'deps': [
-            'zlib',
-          ],
-        },
         'link_settings': {
           'libraries': [
             '-lbsdiff',
@@ -139,28 +133,12 @@
   'conditions': [
     ['USE_test == 1', {
       'targets': [
-        # Samples generator.
-        {
-          'target_name': 'libsample_generator',
-          'type': 'static_library',
-          'sources': [
-            'src/sample_generator.cc',
-          ],
-          'all_dependent_settings': {
-            'variables': {
-              'deps': [
-                'zlib',
-              ],
-            },
-          },
-        },
         # Unit tests.
         {
           'target_name': 'puffin_unittest',
           'type': 'executable',
           'dependencies': [
             'libpuffdiff-static',
-            'libsample_generator',
             '../../platform2/common-mk/testrunner.gyp:testrunner',
           ],
           'includes': ['../../platform2/common-mk/common_test.gypi'],
