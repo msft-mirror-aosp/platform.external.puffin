@@ -14,7 +14,6 @@
 #include "puffin/src/logging.h"
 #include "puffin/src/memory_stream.h"
 #include "puffin/src/puffin_stream.h"
-#include "puffin/src/sample_generator.h"
 #include "puffin/src/unittest_common.h"
 
 #define PRINT_SAMPLE 0  // Set to 1 if you want to print the generated samples.
@@ -25,6 +24,26 @@ using std::vector;
 namespace puffin {
 
 namespace {
+
+#if PRINT_SAMPLE
+// Print an array into hex-format to the output. This can be used to create
+// static arrays for unit testing of the puffer/huffer.
+void PrintArray(const string& name, const Buffer& array) {
+  std::cout << "const Buffer " << name << " = {" << std::endl << " ";
+  for (size_t idx = 0; idx < array.size(); idx++) {
+    std::cout << " 0x" << std::hex << std::uppercase << std::setfill('0')
+              << std::setw(2) << uint(array[idx]);
+    if (idx == array.size() - 1) {
+      std::cout << std::dec << "};" << std::endl;
+      return;
+    }
+    std::cout << ",";
+    if ((idx + 1) % 12 == 0) {
+      std::cout << std::endl << " ";
+    }
+  }
+}
+#endif
 
 const Buffer kPatch1To2 = {
     0x50, 0x55, 0x46, 0x31, 0x00, 0x00, 0x00, 0x51, 0x08, 0x01, 0x12, 0x27,
@@ -122,7 +141,7 @@ void TestPatching(const Buffer& src_buf,
                        {bsdiff::CompressorType::kBZ2}, patch_path, &patch_out));
 
 #if PRINT_SAMPLE
-  sample_generator::PrintArray("kPatchXXXXX", patch_out);
+  PrintArray("kPatchXXXXX", patch_out);
 #endif
 
   EXPECT_EQ(patch_out, patch);
