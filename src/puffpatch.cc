@@ -44,50 +44,6 @@ void CopyRpfToVector(
   }
 }
 
-bool DecodePatch(const uint8_t* patch,
-                 size_t patch_length,
-                 size_t* bsdiff_patch_offset,
-                 size_t* bsdiff_patch_size,
-                 vector<BitExtent>* src_deflates,
-                 vector<BitExtent>* dst_deflates,
-                 vector<ByteExtent>* src_puffs,
-                 vector<ByteExtent>* dst_puffs,
-                 uint64_t* src_puff_size,
-                 uint64_t* dst_puff_size) {
-  size_t offset = 0;
-  uint32_t header_size;
-  TEST_AND_RETURN_FALSE(patch_length >= (kMagicLength + sizeof(header_size)));
-
-  string patch_magic(reinterpret_cast<const char*>(patch), kMagicLength);
-  if (patch_magic != kMagic) {
-    LOG(ERROR) << "Magic number for Puffin patch is incorrect: " << patch_magic;
-    return false;
-  }
-  offset += kMagicLength;
-
-  // Read the header size from big-endian mode.
-  memcpy(&header_size, patch + offset, sizeof(header_size));
-  header_size = be32toh(header_size);
-  offset += sizeof(header_size);
-  TEST_AND_RETURN_FALSE(header_size <= (patch_length - offset));
-
-  metadata::PatchHeader header;
-  TEST_AND_RETURN_FALSE(header.ParseFromArray(patch + offset, header_size));
-  offset += header_size;
-
-  CopyRpfToVector(header.src().deflates(), src_deflates, 1);
-  CopyRpfToVector(header.dst().deflates(), dst_deflates, 1);
-  CopyRpfToVector(header.src().puffs(), src_puffs, 8);
-  CopyRpfToVector(header.dst().puffs(), dst_puffs, 8);
-
-  *src_puff_size = header.src().puff_length();
-  *dst_puff_size = header.dst().puff_length();
-
-  *bsdiff_patch_offset = offset;
-  *bsdiff_patch_size = patch_length - offset;
-  return true;
-}
-
 class BsdiffStream : public bsdiff::FileInterface {
  public:
   ~BsdiffStream() override = default;
@@ -137,6 +93,50 @@ class BsdiffStream : public bsdiff::FileInterface {
 
 }  // namespace
 
+bool DecodePatch(const uint8_t* patch,
+                 size_t patch_length,
+                 size_t* bsdiff_patch_offset,
+                 size_t* bsdiff_patch_size,
+                 vector<BitExtent>* src_deflates,
+                 vector<BitExtent>* dst_deflates,
+                 vector<ByteExtent>* src_puffs,
+                 vector<ByteExtent>* dst_puffs,
+                 uint64_t* src_puff_size,
+                 uint64_t* dst_puff_size) {
+  size_t offset = 0;
+  uint32_t header_size;
+  TEST_AND_RETURN_FALSE(patch_length >= (kMagicLength + sizeof(header_size)));
+
+  string patch_magic(reinterpret_cast<const char*>(patch), kMagicLength);
+  if (patch_magic != kMagic) {
+    LOG(ERROR) << "Magic number for Puffin patch is incorrect: " << patch_magic;
+    return false;
+  }
+  offset += kMagicLength;
+
+  // Read the header size from big-endian mode.
+  memcpy(&header_size, patch + offset, sizeof(header_size));
+  header_size = be32toh(header_size);
+  offset += sizeof(header_size);
+  TEST_AND_RETURN_FALSE(header_size <= (patch_length - offset));
+
+  metadata::PatchHeader header;
+  TEST_AND_RETURN_FALSE(header.ParseFromArray(patch + offset, header_size));
+  offset += header_size;
+
+  CopyRpfToVector(header.src().deflates(), src_deflates, 1);
+  CopyRpfToVector(header.dst().deflates(), dst_deflates, 1);
+  CopyRpfToVector(header.src().puffs(), src_puffs, 8);
+  CopyRpfToVector(header.dst().puffs(), dst_puffs, 8);
+
+  *src_puff_size = header.src().puff_length();
+  *dst_puff_size = header.dst().puff_length();
+
+  *bsdiff_patch_offset = offset;
+  *bsdiff_patch_size = patch_length - offset;
+  return true;
+}
+
 bool PuffPatch(UniqueStreamPtr src,
                UniqueStreamPtr dst,
                const uint8_t* patch,
@@ -164,8 +164,7 @@ bool PuffPatch(UniqueStreamPtr src,
 
   // For writing into destination.
   auto writer = BsdiffStream::Create(PuffinStream::CreateForHuff(
-      std::move(dst), huffer, dst_puff_size, dst_deflates, dst_puffs,
-      /*ignore_deflate_size=*/false));
+      std::move(dst), huffer, dst_puff_size, dst_deflates, dst_puffs));
   TEST_AND_RETURN_FALSE(writer);
 
   // Running bspatch itself.

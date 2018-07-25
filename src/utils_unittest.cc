@@ -125,10 +125,10 @@ TEST(UtilsTest, FindPuffLocations2Test) {
 
 TEST(UtilsTest, LocateDeflatesInZlib) {
   Buffer zlib_data(kZlibEntry, std::end(kZlibEntry));
-  vector<ByteExtent> deflates;
+  vector<BitExtent> deflates;
+  vector<BitExtent> expected_deflates = {{16, 98}};
   EXPECT_TRUE(LocateDeflatesInZlib(zlib_data, &deflates));
-  EXPECT_EQ(static_cast<size_t>(1), deflates.size());
-  EXPECT_EQ(ByteExtent(2, 13), deflates[0]);
+  EXPECT_EQ(deflates, expected_deflates);
 }
 
 TEST(UtilsTest, LocateDeflatesInEmptyZlib) {
@@ -143,7 +143,7 @@ TEST(UtilsTest, LocateDeflatesInZlibWithInvalidFields) {
   auto cmf = zlib_data[0];
   auto flag = zlib_data[1];
 
-  vector<ByteExtent> deflates;
+  vector<BitExtent> deflates;
   zlib_data[0] = cmf & 0xF0;
   EXPECT_FALSE(LocateDeflatesInZlib(zlib_data, &deflates));
   zlib_data[0] = cmf | (8 << 4);
@@ -156,55 +156,52 @@ TEST(UtilsTest, LocateDeflatesInZlibWithInvalidFields) {
 
 TEST(UtilsTest, LocateDeflatesInZipArchiveSmoke) {
   Buffer zip_entries(kZipEntries, std::end(kZipEntries));
-  vector<ByteExtent> deflates;
+  vector<BitExtent> deflates;
+  vector<BitExtent> expected_deflates = {{472, 46}, {992, 46}};
   EXPECT_TRUE(LocateDeflatesInZipArchive(zip_entries, &deflates));
-  EXPECT_EQ(static_cast<size_t>(2), deflates.size());
-  EXPECT_EQ(ByteExtent(59, 6), deflates[0]);
-  EXPECT_EQ(ByteExtent(124, 6), deflates[1]);
+  EXPECT_EQ(deflates, expected_deflates);
 }
 
 TEST(UtilsTest, LocateDeflatesInZipArchiveWithDataDescriptor) {
   Buffer zip_entries(kZipEntryWithDataDescriptor,
                      std::end(kZipEntryWithDataDescriptor));
-  vector<ByteExtent> deflates;
+  vector<BitExtent> deflates;
+  vector<BitExtent> expected_deflates = {{472, 46}, {1120, 46}};
   EXPECT_TRUE(LocateDeflatesInZipArchive(zip_entries, &deflates));
-  EXPECT_EQ(static_cast<size_t>(2), deflates.size());
-  EXPECT_EQ(ByteExtent(59, 6), deflates[0]);
-  EXPECT_EQ(ByteExtent(140, 6), deflates[1]);
+  EXPECT_EQ(deflates, expected_deflates);
 }
 
 TEST(UtilsTest, LocateDeflatesInZipArchiveErrorChecks) {
   Buffer zip_entries(kZipEntries, std::end(kZipEntries));
   // Construct a invalid zip entry whose size overflows.
   zip_entries[29] = 0xff;
-  vector<ByteExtent> deflates_overflow;
+  vector<BitExtent> deflates_overflow;
+  vector<BitExtent> expected_deflates = {{992, 46}};
   EXPECT_TRUE(LocateDeflatesInZipArchive(zip_entries, &deflates_overflow));
-  EXPECT_EQ(static_cast<size_t>(1), deflates_overflow.size());
-  EXPECT_EQ(ByteExtent(124, 6), deflates_overflow[0]);
+  EXPECT_EQ(deflates_overflow, expected_deflates);
 
   zip_entries.resize(128);
-  vector<ByteExtent> deflates_incomplete;
+  vector<BitExtent> deflates_incomplete;
   EXPECT_TRUE(LocateDeflatesInZipArchive(zip_entries, &deflates_incomplete));
-  EXPECT_EQ(static_cast<size_t>(0), deflates_incomplete.size());
+  EXPECT_TRUE(deflates_incomplete.empty());
 }
 
 TEST(UtilsTest, LocateDeflatesInGzip) {
   Buffer gzip_data(kGzipEntryWithMultipleMembers,
                    std::end(kGzipEntryWithMultipleMembers));
-  vector<ByteExtent> deflates;
+  vector<BitExtent> deflates;
+  vector<BitExtent> expected_deflates = {{160, 98}, {488, 98}};
   EXPECT_TRUE(LocateDeflatesInGzip(gzip_data, &deflates));
-  EXPECT_EQ(static_cast<size_t>(2), deflates.size());
-  EXPECT_EQ(ByteExtent(20, 13), deflates[0]);
-  EXPECT_EQ(ByteExtent(61, 13), deflates[1]);
+  EXPECT_EQ(deflates, expected_deflates);
 }
 
 TEST(UtilsTest, LocateDeflatesInGzipWithExtraField) {
   Buffer gzip_data(kGzipEntryWithExtraField,
                    std::end(kGzipEntryWithExtraField));
-  vector<ByteExtent> deflates;
+  vector<BitExtent> deflates;
+  vector<BitExtent> expected_deflates = {{256, 98}};
   EXPECT_TRUE(LocateDeflatesInGzip(gzip_data, &deflates));
-  EXPECT_EQ(static_cast<size_t>(1), deflates.size());
-  EXPECT_EQ(ByteExtent(32, 13), deflates[0]);
+  EXPECT_EQ(deflates, expected_deflates);
 }
 
 TEST(UtilsTest, RemoveEqualBitExtents) {

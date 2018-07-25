@@ -14,7 +14,6 @@ cc_defaults {
     cflags: [
         "-DUSE_BRILLO=1",
         "-D_FILE_OFFSET_BITS=64",
-        "-DZLIB_CONST",
         "-Wall",
         "-Werror",
         "-Wextra",
@@ -62,7 +61,6 @@ cc_library_static {
     static_libs: [
         "libbsdiff",
         "libpuffpatch",
-        "libz",
     ],
 }
 
@@ -80,7 +78,6 @@ cc_binary {
         "libdivsufsort64",
         "libpuffdiff",
         "libpuffpatch",
-        "libz",
     ],
 }
 
@@ -95,14 +92,10 @@ cc_test {
         "src/patching_unittest.cc",
         "src/puff_io_unittest.cc",
         "src/puffin_unittest.cc",
-        "src/sample_generator.cc",
         "src/stream_unittest.cc",
         "src/testrunner.cc",
         "src/unittest_common.cc",
         "src/utils_unittest.cc",
-    ],
-    shared_libs: [
-        "libz",
     ],
     static_libs: [
         "libbsdiff",
