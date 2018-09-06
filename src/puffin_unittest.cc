@@ -54,6 +54,7 @@ class PuffinTest : public ::testing::Test {
         case PuffData::Type::kLiteral:
           *start = pd.byte;
           start++;
+          FALLTHROUGH_INTENDED;
 
         case PuffData::Type::kLiterals:
           pd.read_fn(start, pd.length);
