@@ -28,6 +28,14 @@
 
 #endif  // USE_BRILLO
 
+#ifndef FALLTHROUGH_INTENDED
+#ifdef __clang__
+#define FALLTHROUGH_INTENDED [[clang::fallthrough]]
+#else
+#define FALLTHROUGH_INTENDED
+#endif  // __clang__
+#endif  // FALLTHROUGH_INTENDED
+
 namespace puffin {
 
 using Buffer = std::vector<uint8_t>;

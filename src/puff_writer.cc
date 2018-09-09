@@ -30,7 +30,7 @@ bool BufferPuffWriter::Insert(const PuffData& pd) {
       if (pd.length == 0) {
         return true;
       }
-    // We don't break here. It will be processed in kLiteral;
+      FALLTHROUGH_INTENDED;
     case PuffData::Type::kLiteral: {
       DVLOG(2) << "Write literals length: " << pd.length;
       size_t length = pd.type == PuffData::Type::kLiteral ? 1 : pd.length;
