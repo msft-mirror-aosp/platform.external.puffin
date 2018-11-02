@@ -29,6 +29,7 @@ cc_defaults {
 cc_library_static {
     name: "libpuffpatch",
     defaults: ["puffin_defaults"],
+    recovery_available: true,
     srcs: [
         "puffin/src/puffin.proto",
         "src/bit_reader.cc",
