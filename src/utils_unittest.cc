@@ -195,6 +195,24 @@ TEST(UtilsTest, LocateDeflatesInGzip) {
   EXPECT_EQ(deflates, expected_deflates);
 }
 
+TEST(UtilsTest, LocateDeflatesInGzipFail) {
+  Buffer gzip_data(kGzipEntryWithMultipleMembers,
+                   std::end(kGzipEntryWithMultipleMembers));
+  gzip_data[0] ^= 1;
+  vector<BitExtent> deflates;
+  EXPECT_FALSE(LocateDeflatesInGzip(gzip_data, &deflates));
+}
+
+TEST(UtilsTest, LocateDeflatesInGzipWithPadding) {
+  Buffer gzip_data(kGzipEntryWithMultipleMembers,
+                   std::end(kGzipEntryWithMultipleMembers));
+  gzip_data.resize(gzip_data.size() + 100);
+  vector<BitExtent> deflates;
+  vector<BitExtent> expected_deflates = {{160, 98}, {488, 98}};
+  EXPECT_TRUE(LocateDeflatesInGzip(gzip_data, &deflates));
+  EXPECT_EQ(deflates, expected_deflates);
+}
+
 TEST(UtilsTest, LocateDeflatesInGzipWithExtraField) {
   Buffer gzip_data(kGzipEntryWithExtraField,
                    std::end(kGzipEntryWithExtraField));
