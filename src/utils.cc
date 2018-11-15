@@ -181,7 +181,8 @@ bool LocateDeflatesInZlibBlocks(const string& file_path,
 // https://www.ietf.org/rfc/rfc1952.txt
 bool LocateDeflatesInGzip(const Buffer& data, vector<BitExtent>* deflates) {
   uint64_t member_start = 0;
-  while (member_start < data.size()) {
+  while (member_start + 10 <= data.size() && data[member_start + 0] == 0x1F &&
+         data[member_start + 1] == 0x8B && data[member_start + 2] == 8) {
     // Each member entry has the following format
     // 0      1     0x1F
     // 1      1     0x8B
@@ -190,10 +191,6 @@ bool LocateDeflatesInGzip(const Buffer& data, vector<BitExtent>* deflates) {
     // 4      4     modification time
     // 8      1     extra flags
     // 9      1     operating system
-    TEST_AND_RETURN_FALSE(member_start + 10 <= data.size());
-    TEST_AND_RETURN_FALSE(data[member_start + 0] == 0x1F);
-    TEST_AND_RETURN_FALSE(data[member_start + 1] == 0x8B);
-    TEST_AND_RETURN_FALSE(data[member_start + 2] == 8);
 
     uint64_t offset = member_start + 10;
     int flag = data[member_start + 3];
@@ -239,7 +236,8 @@ bool LocateDeflatesInGzip(const Buffer& data, vector<BitExtent>* deflates) {
     offset += 8;
     member_start = offset;
   }
-  return true;
+  // Return true if we've successfully parsed at least one gzip.
+  return member_start != 0;
 }
 
 // For more information about the zip format, refer to
