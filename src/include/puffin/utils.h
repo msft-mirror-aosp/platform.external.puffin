@@ -59,14 +59,6 @@ PUFFIN_EXPORT
 bool LocateDeflatesInZipArchive(const Buffer& data,
                                 std::vector<BitExtent>* deflates);
 
-// Create a list of deflate subblock locations from the deflate blocks in a
-// zip archive.
-// TODO(ahassani): Remove this function once update_engine starts to use
-// LocateDeflatesInZipArchive()
-PUFFIN_EXPORT
-bool LocateDeflateSubBlocksInZipArchive(const Buffer& data,
-                                        std::vector<BitExtent>* deflates);
-
 // Reads the deflates in from |deflates| and returns a list of its subblock
 // locations. Each subblock in practice is a deflate stream by itself.
 // Assumption is that the first subblock in each deflate in |deflates| start in

@@ -310,11 +310,6 @@ bool LocateDeflatesInZipArchive(const Buffer& data,
   return true;
 }
 
-bool LocateDeflateSubBlocksInZipArchive(const Buffer& data,
-                                        vector<BitExtent>* deflates) {
-  return LocateDeflatesInZipArchive(data, deflates);
-}
-
 bool FindPuffLocations(const UniqueStreamPtr& src,
                        const vector<BitExtent>& deflates,
                        vector<ByteExtent>* puffs,
