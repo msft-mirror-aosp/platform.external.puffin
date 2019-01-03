@@ -46,6 +46,10 @@ extern const std::vector<ByteExtent> kDeflateExtentsSample2;
 extern const std::vector<BitExtent> kSubblockDeflateExtentsSample2;
 extern const std::vector<ByteExtent> kPuffExtentsSample2;
 
+extern const Buffer kProblematicCache;
+extern const std::vector<BitExtent> kProblematicCacheDeflateExtents;
+extern const std::vector<BitExtent> kProblematicCachePuffExtents;
+
 }  // namespace puffin
 
 #endif  // SRC_UNITTEST_COMMON_H_
