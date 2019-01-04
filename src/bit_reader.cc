@@ -68,4 +68,8 @@ uint64_t BufferBitReader::OffsetInBits() const {
   return (index_ * 8) - in_cache_bits_;
 }
 
+uint64_t BufferBitReader::BitsRemaining() const {
+  return ((in_size_ - index_) * 8) + in_cache_bits_;
+}
+
 }  // namespace puffin
