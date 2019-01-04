@@ -574,4 +574,33 @@ TEST_F(PuffinTest, BitExtentPuffAndHuffTest) {
                              kGapPuffs, kGapPuffExtents);
 }
 
+TEST_F(PuffinTest, ExcludeBadDistanceCaches) {
+  BufferBitReader br(kProblematicCache.data(), kProblematicCache.size());
+  BufferPuffWriter pw(nullptr, 0);
+
+  // The first two bits of this data should be ignored.
+  br.CacheBits(2);
+  br.DropBits(2);
+
+  vector<BitExtent> deflates, empty;
+  Puffer puffer(true);
+  EXPECT_TRUE(puffer.PuffDeflate(&br, &pw, &deflates));
+  EXPECT_EQ(deflates, empty);
+}
+
+TEST_F(PuffinTest, NoExcludeBadDistanceCaches) {
+  BufferBitReader br(kProblematicCache.data(), kProblematicCache.size());
+  BufferPuffWriter pw(nullptr, 0);
+
+  // The first two bits of this data should be ignored.
+  br.CacheBits(2);
+  br.DropBits(2);
+
+  vector<BitExtent> deflates;
+  Puffer puffer;  // The default value for excluding bad distance cache should
+                  // be false.
+  EXPECT_TRUE(puffer.PuffDeflate(&br, &pw, &deflates));
+  EXPECT_EQ(deflates, kProblematicCacheDeflateExtents);
+}
+
 }  // namespace puffin
