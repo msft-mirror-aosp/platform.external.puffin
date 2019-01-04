@@ -16,7 +16,7 @@ class BitWriterInterface;
 class PuffReaderInterface;
 class HuffmanTable;
 
-class PUFFIN_EXPORT Huffer {
+class Huffer {
  public:
   Huffer();
   ~Huffer();

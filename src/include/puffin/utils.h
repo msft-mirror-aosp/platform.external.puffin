@@ -16,7 +16,7 @@ namespace puffin {
 // Converts an array of |ByteExtens| or |BitExtents| to a string. Each extent
 // has format "offset:length" and are comma separated.
 template <typename T>
-PUFFIN_EXPORT std::string ExtentsToString(const T& extents) {
+std::string ExtentsToString(const T& extents) {
   std::string str;
   for (const auto& extent : extents) {
     str += std::to_string(extent.offset) + ":" + std::to_string(extent.length) +
@@ -45,7 +45,6 @@ bool LocateDeflatesInZlib(const Buffer& data, std::vector<BitExtent>* deflates);
 
 // Uses the function above, to locate deflates (bit addressed) in a given file
 // |file_path| using the list of zlib blocks |zlibs|.
-PUFFIN_EXPORT
 bool LocateDeflatesInZlibBlocks(const std::string& file_path,
                                 const std::vector<ByteExtent>& zlibs,
                                 std::vector<BitExtent>* deflates);
@@ -55,7 +54,6 @@ bool LocateDeflatesInZlibBlocks(const std::string& file_path,
 bool LocateDeflatesInGzip(const Buffer& data, std::vector<BitExtent>* deflates);
 
 // Search for the deflates in a zip archive, and put the result in |deflates|.
-PUFFIN_EXPORT
 bool LocateDeflatesInZipArchive(const Buffer& data,
                                 std::vector<BitExtent>* deflates);
 
@@ -78,7 +76,6 @@ bool FindPuffLocations(const UniqueStreamPtr& src,
 // Removes any BitExtents from both |extents1| and |extents2| if the data it
 // points to is found in both |extents1| and |extents2|. The order of the
 // remaining BitExtents is preserved.
-PUFFIN_EXPORT
 void RemoveEqualBitExtents(const Buffer& data1,
                            const Buffer& data2,
                            std::vector<BitExtent>* extents1,

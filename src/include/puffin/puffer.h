@@ -17,7 +17,7 @@ class BitReaderInterface;
 class PuffWriterInterface;
 class HuffmanTable;
 
-class PUFFIN_EXPORT Puffer {
+class Puffer {
  public:
   // In older versions of puffin, there is a bug in the client which incorrectly
   // identifies the number of bits to cache when number of bits for the current
