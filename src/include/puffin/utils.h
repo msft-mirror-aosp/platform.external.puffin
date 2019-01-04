@@ -92,6 +92,12 @@ void RemoveEqualBitExtents(const Buffer& data1,
                            std::vector<BitExtent>* extents1,
                            std::vector<BitExtent>* extents2);
 
+// Using |data| it removes all the deflate extents from |deflates| which have
+// the problem identified in crbug.com/915559. Each element of |deflates| should
+// contain exactly one deflate block otherwire it returns false.
+bool RemoveDeflatesWithBadDistanceCaches(const Buffer& data,
+                                         std::vector<BitExtent>* deflates);
+
 }  // namespace puffin
 
 #endif  // SRC_INCLUDE_PUFFIN_UTILS_H_
