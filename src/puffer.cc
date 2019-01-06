@@ -23,7 +23,12 @@ using std::vector;
 
 namespace puffin {
 
-Puffer::Puffer() : dyn_ht_(new HuffmanTable()), fix_ht_(new HuffmanTable()) {}
+Puffer::Puffer(bool exclude_bad_distance_caches)
+    : dyn_ht_(new HuffmanTable()),
+      fix_ht_(new HuffmanTable()),
+      exclude_bad_distance_caches_(exclude_bad_distance_caches) {}
+
+Puffer::Puffer() : Puffer(false) {}
 
 Puffer::~Puffer() {}
 
@@ -129,6 +134,10 @@ bool Puffer::PuffDeflate(BitReaderInterface* br,
         return false;
     }
 
+    // If true and the list of output |deflates| is non-null, the current
+    // deflate location will be added to that list.
+    bool include_deflate = true;
+
     while (true) {  // Breaks when the end of block is reached.
       auto max_bits = cur_ht->LitLenMaxBits();
       if (!br->CacheBits(max_bits)) {
@@ -152,7 +161,7 @@ bool Puffer::PuffDeflate(BitReaderInterface* br,
       } else if (256 == lit_len_alphabet) {
         pd.type = PuffData::Type::kEndOfBlock;
         TEST_AND_RETURN_FALSE(pw->Insert(pd));
-        if (deflates != nullptr) {
+        if (deflates != nullptr && include_deflate) {
           deflates->emplace_back(start_bit_offset,
                                  br->OffsetInBits() - start_bit_offset);
         }
@@ -170,8 +179,21 @@ bool Puffer::PuffDeflate(BitReaderInterface* br,
         }
         auto length = kLengthBases[len_code_start] + extra_bits_value;
 
-        TEST_AND_RETURN_FALSE(br->CacheBits(cur_ht->DistanceMaxBits()));
-        auto bits = br->ReadBits(cur_ht->DistanceMaxBits());
+        auto bits_to_cache = cur_ht->DistanceMaxBits();
+        if (!br->CacheBits(bits_to_cache)) {
+          // This is a corner case that is present in the older versions of the
+          // puffin. So we need to catch it and correctly discard this kind of
+          // deflate when we encounter it. See crbug.com/915559 for more info.
+          bits_to_cache = br->BitsRemaining();
+          TEST_AND_RETURN_FALSE(br->CacheBits(bits_to_cache));
+          if (exclude_bad_distance_caches_) {
+            include_deflate = false;
+          }
+          LOG(WARNING) << "A rare condition that older puffin clients fail to"
+                       << " recognize happened. Nothing to worry about."
+                       << " See crbug.com/915559";
+        }
+        auto bits = br->ReadBits(bits_to_cache);
         uint16_t distance_alphabet;
         size_t nbits;
         TEST_AND_RETURN_FALSE(

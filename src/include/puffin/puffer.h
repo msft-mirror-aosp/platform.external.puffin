@@ -19,6 +19,15 @@ class HuffmanTable;
 
 class PUFFIN_EXPORT Puffer {
  public:
+  // In older versions of puffin, there is a bug in the client which incorrectly
+  // identifies the number of bits to cache when number of bits for the current
+  // distance plus the number of bits for end of block Huffman code is smaller
+  // than the maximum number of bits needed for distance. If this situations
+  // happens at the very end of the block, it incorrectly tries to cache more
+  // bits than we have and crashes as a result. If |exclude_bad_distance_caches|
+  // is true, we identify those problematic deflate buffers and exclude them
+  // from the list of available deflates. The default is false.
+  explicit Puffer(bool exclude_bad_distance_caches);
   Puffer();
   ~Puffer();
 
@@ -38,6 +47,8 @@ class PUFFIN_EXPORT Puffer {
  private:
   std::unique_ptr<HuffmanTable> dyn_ht_;
   std::unique_ptr<HuffmanTable> fix_ht_;
+
+  bool exclude_bad_distance_caches_;
 
   DISALLOW_COPY_AND_ASSIGN(Puffer);
 };
