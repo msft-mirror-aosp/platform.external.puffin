@@ -14,7 +14,6 @@
 #include "puffin/src/puffin_stream.h"
 #include "puffin/src/unittest_common.h"
 
-using std::shared_ptr;
 using std::string;
 using std::vector;
 
@@ -196,7 +195,7 @@ TEST_F(StreamTest, FileStreamTest) {
 }
 
 TEST_F(StreamTest, PuffinStreamTest) {
-  shared_ptr<Puffer> puffer(new Puffer());
+  auto puffer = std::make_shared<Puffer>();
   auto read_stream = PuffinStream::CreateForPuff(
       MemoryStream::CreateForRead(kDeflatesSample1), puffer,
       kPuffsSample1.size(), kSubblockDeflateExtentsSample1,
@@ -215,7 +214,7 @@ TEST_F(StreamTest, PuffinStreamTest) {
   TestClose(read_stream.get());
 
   Buffer buf(kDeflatesSample1.size());
-  shared_ptr<Huffer> huffer(new Huffer());
+  auto huffer = std::make_shared<Huffer>();
   auto write_stream = PuffinStream::CreateForHuff(
       MemoryStream::CreateForWrite(&buf), huffer, kPuffsSample1.size(),
       kSubblockDeflateExtentsSample1, kPuffExtentsSample1);

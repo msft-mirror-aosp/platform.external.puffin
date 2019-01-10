@@ -36,6 +36,7 @@ using puffin::Puffer;
 using puffin::PuffinStream;
 using puffin::UniqueStreamPtr;
 using std::string;
+using std::stringstream;
 using std::vector;
 
 namespace {
@@ -47,10 +48,10 @@ template <typename T>
 vector<T> StringToExtents(const string& str) {
   vector<T> extents;
   if (!str.empty()) {
-    std::stringstream ss(str);
+    stringstream ss(str);
     string extent_str;
     while (getline(ss, extent_str, kExtentDelimeter)) {
-      std::stringstream extent_ss(extent_str);
+      stringstream extent_ss(extent_str);
       string offset_str, length_str;
       getline(extent_ss, offset_str, kOffsetLengthDelimeter);
       getline(extent_ss, length_str, kOffsetLengthDelimeter);
