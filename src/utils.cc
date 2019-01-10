@@ -95,8 +95,7 @@ bool LocateDeflatesInDeflateStream(const uint8_t* data,
 // the proper size of the zlib stream in |data|. Basically the size of the zlib
 // stream should be known before hand. Otherwise we need to parse the stream and
 // find the location of compressed blocks using CalculateSizeOfDeflateBlock().
-bool LocateDeflatesInZlib(const Buffer& data,
-                          std::vector<BitExtent>* deflates) {
+bool LocateDeflatesInZlib(const Buffer& data, vector<BitExtent>* deflates) {
   // A zlib stream has the following format:
   // 0           1     compression method and flag
   // 1           1     flag
@@ -381,8 +380,8 @@ bool FindPuffLocations(const UniqueStreamPtr& src,
 
 void RemoveEqualBitExtents(const Buffer& data1,
                            const Buffer& data2,
-                           std::vector<BitExtent>* extents1,
-                           std::vector<BitExtent>* extents2) {
+                           vector<BitExtent>* extents1,
+                           vector<BitExtent>* extents2) {
   set<ExtentData> extent1_set, equal_extents;
   for (const BitExtent& ext : *extents1) {
     extent1_set.emplace(ext, data1);

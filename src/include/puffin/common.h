@@ -39,8 +39,6 @@
 namespace puffin {
 
 using Buffer = std::vector<uint8_t>;
-using UniqueBufferPtr = std::unique_ptr<Buffer>;
-using SharedBufferPtr = std::shared_ptr<Buffer>;
 
 // This class is similar to the protobuf generated for |ProtoByteExtent|. We
 // defined an extra class so the users of puffin do not have to include

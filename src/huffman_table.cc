@@ -9,6 +9,9 @@
 
 #include "puffin/src/logging.h"
 
+using std::string;
+using std::vector;
+
 namespace puffin {
 
 // Permutations of input Huffman code lengths (used only to read code lengths
@@ -105,7 +108,7 @@ bool HuffmanTable::InitHuffmanCodes(const Buffer& lens, size_t* max_bits) {
 }
 
 bool HuffmanTable::BuildHuffmanCodes(const Buffer& lens,
-                                     std::vector<uint16_t>* hcodes,
+                                     vector<uint16_t>* hcodes,
                                      size_t* max_bits) {
   TEST_AND_RETURN_FALSE(InitHuffmanCodes(lens, max_bits));
   // Sort descending based on the bit-length of the code.
@@ -132,7 +135,7 @@ bool HuffmanTable::BuildHuffmanCodes(const Buffer& lens,
 }
 
 bool HuffmanTable::BuildHuffmanReverseCodes(const Buffer& lens,
-                                            std::vector<uint16_t>* rcodes,
+                                            vector<uint16_t>* rcodes,
                                             size_t* max_bits) {
   TEST_AND_RETURN_FALSE(InitHuffmanCodes(lens, max_bits));
   // Sort ascending based on the index.
@@ -516,7 +519,7 @@ bool HuffmanTable::BuildHuffmanCodeLengths(const uint8_t* buffer,
   return true;
 }
 
-std::string BlockTypeToString(BlockType type) {
+string BlockTypeToString(BlockType type) {
   switch (type) {
     case BlockType::kUncompressed:
       return "Uncompressed";
