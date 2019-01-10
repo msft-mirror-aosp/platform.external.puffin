@@ -23,7 +23,6 @@ group("all") {
 pkg_config("target_defaults") {
   pkg_deps = [
     "libchrome-${libbase_ver}",
-    "libbrillo-${libbase_ver}",
     "protobuf-lite",
   ]
   cflags = [ "-Wextra" ]
@@ -94,8 +93,15 @@ static_library("libpuffdiff") {
   ]
 }
 
+pkg_config("libbrillo") {
+  pkg_deps = [
+    "libbrillo-${libbase_ver}",
+  ]
+}
+
 executable("puffin") {
   configs += [
+    ":libbrillo",
     ":target_defaults",
   ]
   deps = [
@@ -111,6 +117,7 @@ if (use.test) {
   executable("puffin_test") {
     configs += [
       "//common-mk:test",
+      ":libbrillo",
       ":target_defaults",
     ]
     sources = [
@@ -134,6 +141,7 @@ if (use.fuzzer) {
   executable("puffin_fuzzer") {
     configs += [
       "//common-mk/common_fuzzer",
+      ":libbrillo",
       ":target_defaults",
     ]
     deps = [
