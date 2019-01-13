@@ -187,7 +187,7 @@ class PuffinTest : public ::testing::Test {
                                   const vector<BitExtent>& deflate_extents,
                                   const Buffer& puff_buffer,
                                   const vector<ByteExtent>& puff_extents) {
-    std::shared_ptr<Puffer> puffer(new Puffer());
+    auto puffer = std::make_shared<Puffer>();
     auto deflate_stream = MemoryStream::CreateForRead(deflate_buffer);
     ASSERT_TRUE(deflate_stream->Seek(0));
     vector<ByteExtent> out_puff_extents;
@@ -206,7 +206,7 @@ class PuffinTest : public ::testing::Test {
                                         out_puff_buffer.size()));
     EXPECT_EQ(out_puff_buffer, puff_buffer);
 
-    std::shared_ptr<Huffer> huffer(new Huffer());
+    auto huffer = std::make_shared<Huffer>();
     Buffer out_deflate_buffer;
     deflate_stream = MemoryStream::CreateForWrite(&out_deflate_buffer);
 
@@ -560,11 +560,11 @@ const Buffer kGapPuffs = {0x00, 0x00, 0x20, 0x00, 0x01, 0xFF, 0x81,  // puff  0
 
 // The fifth deflate (and its puff in kGapPuffExtents) is for zero length
 // deflate corner case.
-const std::vector<BitExtent> kGapSubblockDeflateExtents = {
+const vector<BitExtent> kGapSubblockDeflateExtents = {
     {0, 18},   {18, 18},  {37, 18},  {57, 18},  {75, 0},   {78, 18}, {96, 18},
     {122, 18}, {140, 18}, {166, 18}, {186, 18}, {206, 18}, {232, 18}};
 
-const std::vector<ByteExtent> kGapPuffExtents = {
+const vector<ByteExtent> kGapPuffExtents = {
     {0, 7},  {7, 7},  {15, 7}, {24, 7}, {31, 0}, {32, 7}, {39, 7},
     {48, 7}, {55, 7}, {64, 7}, {72, 7}, {80, 7}, {88, 7}};
 }  // namespace
