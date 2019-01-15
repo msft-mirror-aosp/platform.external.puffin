@@ -195,6 +195,24 @@ TEST(UtilsTest, LocateDeflatesInGzip) {
   EXPECT_EQ(deflates, expected_deflates);
 }
 
+TEST(UtilsTest, LocateDeflatesInGzipFail) {
+  Buffer gzip_data(kGzipEntryWithMultipleMembers,
+                   std::end(kGzipEntryWithMultipleMembers));
+  gzip_data[0] ^= 1;
+  vector<BitExtent> deflates;
+  EXPECT_FALSE(LocateDeflatesInGzip(gzip_data, &deflates));
+}
+
+TEST(UtilsTest, LocateDeflatesInGzipWithPadding) {
+  Buffer gzip_data(kGzipEntryWithMultipleMembers,
+                   std::end(kGzipEntryWithMultipleMembers));
+  gzip_data.resize(gzip_data.size() + 100);
+  vector<BitExtent> deflates;
+  vector<BitExtent> expected_deflates = {{160, 98}, {488, 98}};
+  EXPECT_TRUE(LocateDeflatesInGzip(gzip_data, &deflates));
+  EXPECT_EQ(deflates, expected_deflates);
+}
+
 TEST(UtilsTest, LocateDeflatesInGzipWithExtraField) {
   Buffer gzip_data(kGzipEntryWithExtraField,
                    std::end(kGzipEntryWithExtraField));
@@ -222,6 +240,42 @@ TEST(UtilsTest, RemoveEqualBitExtents) {
   RemoveEqualBitExtents(data1, data2, &ext1, &ext2);
   EXPECT_EQ(expected_ext1, ext1);
   EXPECT_EQ(expected_ext2, ext2);
+}
+
+TEST(UtilsTest, RemoveDeflatesWithBadDistanceCaches) {
+  vector<BitExtent> deflates(kProblematicCacheDeflateExtents), empty;
+  EXPECT_TRUE(
+      RemoveDeflatesWithBadDistanceCaches(kProblematicCache, &deflates));
+  EXPECT_EQ(deflates, empty);
+
+  // Just a sanity check to make sure this function is not removing anything
+  // else.
+  deflates = kSubblockDeflateExtentsSample1;
+  EXPECT_TRUE(RemoveDeflatesWithBadDistanceCaches(kDeflatesSample1, &deflates));
+  EXPECT_EQ(deflates, kSubblockDeflateExtentsSample1);
+
+  // Now combine three deflates and make sure it is doing the right job.
+  Buffer data;
+  data.insert(data.end(), kDeflatesSample1.begin(), kDeflatesSample1.end());
+  data.insert(data.end(), kProblematicCache.begin(), kProblematicCache.end());
+  data.insert(data.end(), kDeflatesSample1.begin(), kDeflatesSample1.end());
+
+  deflates = kSubblockDeflateExtentsSample1;
+  size_t offset = kDeflatesSample1.size() * 8;
+  for (const auto& deflate : kProblematicCacheDeflateExtents) {
+    deflates.emplace_back(deflate.offset + offset, deflate.length);
+  }
+  offset += kProblematicCache.size() * 8;
+  for (const auto& deflate : kSubblockDeflateExtentsSample1) {
+    deflates.emplace_back(deflate.offset + offset, deflate.length);
+  }
+
+  auto expected_deflates(deflates);
+  expected_deflates.erase(expected_deflates.begin() +
+                          kSubblockDeflateExtentsSample1.size());
+
+  EXPECT_TRUE(RemoveDeflatesWithBadDistanceCaches(data, &deflates));
+  EXPECT_EQ(deflates, expected_deflates);
 }
 
 }  // namespace puffin

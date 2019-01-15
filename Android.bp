@@ -2,7 +2,6 @@ cc_defaults {
     name: "puffin_defaults",
     host_supported: true,
     shared_libs: [
-        "libbrillo",
         "libchrome",
         "libprotobuf-cpp-lite",
     ],
@@ -17,6 +16,7 @@ cc_defaults {
         "-Wall",
         "-Werror",
         "-Wextra",
+        "-Wimplicit-fallthrough",
     ],
     target: {
         darwin: {
@@ -28,6 +28,7 @@ cc_defaults {
 cc_library_static {
     name: "libpuffpatch",
     defaults: ["puffin_defaults"],
+    recovery_available: true,
     srcs: [
         "puffin/src/puffin.proto",
         "src/bit_reader.cc",
@@ -71,6 +72,9 @@ cc_binary {
         "src/extent_stream.cc",
         "src/main.cc",
     ],
+    shared_libs: [
+        "libbrillo",
+    ],
     static_libs: [
         "libbsdiff",
         "libbspatch",
@@ -96,6 +100,9 @@ cc_test {
         "src/testrunner.cc",
         "src/unittest_common.cc",
         "src/utils_unittest.cc",
+    ],
+    shared_libs: [
+        "libbrillo",
     ],
     static_libs: [
         "libbsdiff",

@@ -100,7 +100,7 @@ bool PuffDiff(UniqueStreamPtr src,
               UniqueStreamPtr dst,
               const vector<BitExtent>& src_deflates,
               const vector<BitExtent>& dst_deflates,
-              const std::vector<bsdiff::CompressorType>& compressors,
+              const vector<bsdiff::CompressorType>& compressors,
               const string& tmp_filepath,
               Buffer* patch) {
   auto puffer = std::make_shared<Puffer>();
@@ -153,10 +153,10 @@ bool PuffDiff(UniqueStreamPtr src,
 
 bool PuffDiff(const Buffer& src,
               const Buffer& dst,
-              const std::vector<BitExtent>& src_deflates,
-              const std::vector<BitExtent>& dst_deflates,
-              const std::vector<bsdiff::CompressorType>& compressors,
-              const std::string& tmp_filepath,
+              const vector<BitExtent>& src_deflates,
+              const vector<BitExtent>& dst_deflates,
+              const vector<bsdiff::CompressorType>& compressors,
+              const string& tmp_filepath,
               Buffer* patch) {
   return PuffDiff(MemoryStream::CreateForRead(src),
                   MemoryStream::CreateForRead(dst), src_deflates, dst_deflates,

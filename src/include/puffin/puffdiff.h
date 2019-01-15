@@ -47,7 +47,6 @@ bool PuffDiff(const Buffer& src,
 
 // The default puffdiff function that uses both bz2 and brotli to compress the
 // patch data.
-PUFFIN_EXPORT
 bool PuffDiff(const Buffer& src,
               const Buffer& dst,
               const std::vector<BitExtent>& src_deflates,

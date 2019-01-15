@@ -24,6 +24,7 @@
 #include "puffin/src/puffin_stream.h"
 
 using std::string;
+using std::unique_ptr;
 using std::vector;
 
 namespace puffin {
@@ -48,9 +49,9 @@ class BsdiffStream : public bsdiff::FileInterface {
  public:
   ~BsdiffStream() override = default;
 
-  static std::unique_ptr<bsdiff::FileInterface> Create(UniqueStreamPtr stream) {
+  static unique_ptr<bsdiff::FileInterface> Create(UniqueStreamPtr stream) {
     TEST_AND_RETURN_VALUE(stream, nullptr);
-    return std::unique_ptr<bsdiff::FileInterface>(
+    return unique_ptr<bsdiff::FileInterface>(
         new BsdiffStream(std::move(stream)));
   }
 

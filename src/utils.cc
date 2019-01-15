@@ -95,8 +95,7 @@ bool LocateDeflatesInDeflateStream(const uint8_t* data,
 // the proper size of the zlib stream in |data|. Basically the size of the zlib
 // stream should be known before hand. Otherwise we need to parse the stream and
 // find the location of compressed blocks using CalculateSizeOfDeflateBlock().
-bool LocateDeflatesInZlib(const Buffer& data,
-                          std::vector<BitExtent>* deflates) {
+bool LocateDeflatesInZlib(const Buffer& data, vector<BitExtent>* deflates) {
   // A zlib stream has the following format:
   // 0           1     compression method and flag
   // 1           1     flag
@@ -181,7 +180,8 @@ bool LocateDeflatesInZlibBlocks(const string& file_path,
 // https://www.ietf.org/rfc/rfc1952.txt
 bool LocateDeflatesInGzip(const Buffer& data, vector<BitExtent>* deflates) {
   uint64_t member_start = 0;
-  while (member_start < data.size()) {
+  while (member_start + 10 <= data.size() && data[member_start + 0] == 0x1F &&
+         data[member_start + 1] == 0x8B && data[member_start + 2] == 8) {
     // Each member entry has the following format
     // 0      1     0x1F
     // 1      1     0x8B
@@ -190,10 +190,6 @@ bool LocateDeflatesInGzip(const Buffer& data, vector<BitExtent>* deflates) {
     // 4      4     modification time
     // 8      1     extra flags
     // 9      1     operating system
-    TEST_AND_RETURN_FALSE(member_start + 10 <= data.size());
-    TEST_AND_RETURN_FALSE(data[member_start + 0] == 0x1F);
-    TEST_AND_RETURN_FALSE(data[member_start + 1] == 0x8B);
-    TEST_AND_RETURN_FALSE(data[member_start + 2] == 8);
 
     uint64_t offset = member_start + 10;
     int flag = data[member_start + 3];
@@ -239,7 +235,8 @@ bool LocateDeflatesInGzip(const Buffer& data, vector<BitExtent>* deflates) {
     offset += 8;
     member_start = offset;
   }
-  return true;
+  // Return true if we've successfully parsed at least one gzip.
+  return member_start != 0;
 }
 
 // For more information about the zip format, refer to
@@ -310,11 +307,6 @@ bool LocateDeflatesInZipArchive(const Buffer& data,
   }
 
   return true;
-}
-
-bool LocateDeflateSubBlocksInZipArchive(const Buffer& data,
-                                        vector<BitExtent>* deflates) {
-  return LocateDeflatesInZipArchive(data, deflates);
 }
 
 bool FindPuffLocations(const UniqueStreamPtr& src,
@@ -388,8 +380,8 @@ bool FindPuffLocations(const UniqueStreamPtr& src,
 
 void RemoveEqualBitExtents(const Buffer& data1,
                            const Buffer& data2,
-                           std::vector<BitExtent>* extents1,
-                           std::vector<BitExtent>* extents2) {
+                           vector<BitExtent>* extents1,
+                           vector<BitExtent>* extents2) {
   set<ExtentData> extent1_set, equal_extents;
   for (const BitExtent& ext : *extents1) {
     extent1_set.emplace(ext, data1);
@@ -413,4 +405,34 @@ void RemoveEqualBitExtents(const Buffer& data1,
                      }),
       extents1->end());
 }
+
+bool RemoveDeflatesWithBadDistanceCaches(const Buffer& data,
+                                         vector<BitExtent>* deflates) {
+  Puffer puffer(true /* exclude_bad_distance_caches */);
+  for (auto def = deflates->begin(); def != deflates->end();) {
+    uint64_t offset = def->offset / 8;
+    uint64_t length = (def->offset + def->length + 7) / 8 - offset;
+    BufferBitReader br(&data[offset], length);
+    BufferPuffWriter pw(nullptr, 0);
+
+    // Drop the first few bits in the buffer so we start exactly where the
+    // deflate starts.
+    uint64_t bits_to_drop = def->offset % 8;
+    TEST_AND_RETURN_FALSE(br.CacheBits(bits_to_drop));
+    br.DropBits(bits_to_drop);
+
+    vector<BitExtent> defs_out;
+    TEST_AND_RETURN_FALSE(puffer.PuffDeflate(&br, &pw, &defs_out));
+
+    TEST_AND_RETURN_FALSE(defs_out.size() <= 1);
+    if (defs_out.size() == 0) {
+      // This is a deflate we were looking for, remove it.
+      def = deflates->erase(def);
+    } else {
+      ++def;
+    }
+  }
+  return true;
+}
+
 }  // namespace puffin
