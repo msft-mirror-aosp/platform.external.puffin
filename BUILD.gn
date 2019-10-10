@@ -16,7 +16,11 @@ group("all") {
     deps += [ ":puffin_test" ]
   }
   if (use.fuzzer) {
-    deps += [ ":puffin_fuzzer" ]
+    deps += [
+      ":puffin_huff_fuzzer",
+      ":puffin_puff_fuzzer",
+      ":puffin_puffpatch_fuzzer",
+    ]
   }
 }
 
@@ -138,7 +142,33 @@ if (use.test) {
 }
 
 if (use.fuzzer) {
-  executable("puffin_fuzzer") {
+  executable("puffin_huff_fuzzer") {
+    configs += [
+      "//common-mk/common_fuzzer",
+      ":libbrillo",
+      ":target_defaults",
+    ]
+    deps = [
+      ":libpuffpatch",
+    ]
+    sources = [
+      "src/fuzzer_huff.cc",
+    ]
+  }
+  executable("puffin_puff_fuzzer") {
+    configs += [
+      "//common-mk/common_fuzzer",
+      ":libbrillo",
+      ":target_defaults",
+    ]
+    deps = [
+      ":libpuffpatch",
+    ]
+    sources = [
+      "src/fuzzer_puff.cc",
+    ]
+  }
+  executable("puffin_puffpatch_fuzzer") {
     configs += [
       "//common-mk/common_fuzzer",
       ":libbrillo",
@@ -148,7 +178,7 @@ if (use.fuzzer) {
       ":libpuffdiff",
     ]
     sources = [
-      "src/fuzzer.cc",
+      "src/fuzzer_puffpatch.cc",
     ]
   }
 }
