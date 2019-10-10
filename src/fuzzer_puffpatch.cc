@@ -7,27 +7,14 @@
 #include "base/logging.h"
 #include "brillo/test_helpers.h"
 
-#include "puffin/src/bit_reader.h"
-#include "puffin/src/bit_writer.h"
 #include "puffin/src/include/puffin/common.h"
-#include "puffin/src/include/puffin/huffer.h"
-#include "puffin/src/include/puffin/puffer.h"
 #include "puffin/src/include/puffin/puffpatch.h"
 #include "puffin/src/memory_stream.h"
-#include "puffin/src/puff_reader.h"
-#include "puffin/src/puff_writer.h"
 
 using puffin::BitExtent;
 using puffin::Buffer;
-using puffin::BufferBitReader;
-using puffin::BufferBitWriter;
-using puffin::BufferPuffReader;
-using puffin::BufferPuffWriter;
 using puffin::ByteExtent;
-using puffin::Huffer;
 using puffin::MemoryStream;
-using puffin::Puffer;
-using puffin::UniqueStreamPtr;
 using std::vector;
 
 namespace puffin {
@@ -45,23 +32,6 @@ bool DecodePatch(const uint8_t* patch,
 }  // namespace puffin
 
 namespace {
-void FuzzPuff(const uint8_t* data, size_t size) {
-  BufferBitReader bit_reader(data, size);
-  Buffer puff_buffer(size * 2);
-  BufferPuffWriter puff_writer(puff_buffer.data(), puff_buffer.size());
-  vector<BitExtent> bit_extents;
-  Puffer puffer;
-  puffer.PuffDeflate(&bit_reader, &puff_writer, &bit_extents);
-}
-
-void FuzzHuff(const uint8_t* data, size_t size) {
-  BufferPuffReader puff_reader(data, size);
-  Buffer deflate_buffer(size);
-  BufferBitWriter bit_writer(deflate_buffer.data(), deflate_buffer.size());
-  Huffer huffer;
-  huffer.HuffDeflate(&puff_reader, &bit_writer);
-}
-
 template <typename T>
 bool TestExtentsArrayForFuzzer(const vector<T>& extents) {
   const size_t kMaxArraySize = 100;
@@ -114,7 +84,8 @@ void FuzzPuffPatch(const uint8_t* data, size_t size) {
   }
 }
 
-struct Environment {
+class Environment {
+ public:
   Environment() {
     // To turn off the logging.
     logging::SetMinLogLevel(logging::LOG_FATAL);
@@ -123,13 +94,12 @@ struct Environment {
     std::cerr.setstate(std::ios_base::failbit);
   }
 };
-Environment* env = new Environment();
 
 }  // namespace
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
-  FuzzPuff(data, size);
-  FuzzHuff(data, size);
+  static Environment env;
+
   FuzzPuffPatch(data, size);
   return 0;
 }
