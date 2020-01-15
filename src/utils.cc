@@ -244,7 +244,7 @@ bool LocateDeflatesInGzip(const Buffer& data, vector<BitExtent>* deflates) {
 bool LocateDeflatesInZipArchive(const Buffer& data,
                                 vector<BitExtent>* deflates) {
   uint64_t pos = 0;
-  while (pos <= data.size() - 30) {
+  while (pos + 30 <= data.size()) {
     // TODO(xunchang) add support for big endian system when searching for
     // magic numbers.
     if (get_unaligned<uint32_t>(data.data() + pos) != 0x04034b50) {
