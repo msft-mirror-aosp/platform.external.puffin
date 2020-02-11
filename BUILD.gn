@@ -27,8 +27,13 @@ group("all") {
 pkg_config("target_defaults") {
   pkg_deps = [
     "libchrome-${libbase_ver}",
-    "protobuf-lite",
   ]
+  if (use.fuzzer) {
+    # Link against protobuf for fuzzers so we can use libprotobuf-mutator.
+    pkg_deps += [ "protobuf" ]
+  } else {
+    pkg_deps += [ "protobuf-lite" ]
+  }
   cflags = [ "-Wextra" ]
   cflags_cc = [ "-Wnon-virtual-dtor" ]
   include_dirs = [ "src/include" ]
