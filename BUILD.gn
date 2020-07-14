@@ -104,7 +104,7 @@ static_library("libpuffdiff") {
 
 pkg_config("libbrillo") {
   pkg_deps = [
-    "libbrillo-${libbase_ver}",
+    "libbrillo",
   ]
 }
 
