@@ -61,6 +61,9 @@ cc_library_static {
     static_libs: [
         "libbspatch",
     ],
+    whole_static_libs: [
+        "libzucchini",
+    ],
     proto: {
         type: "lite",
         export_proto_headers: true,
@@ -78,6 +81,7 @@ cc_library_static {
     ],
     static_libs: [
         "libbsdiff",
+        "libzucchini",
         "libpuffpatch",
     ],
 }
@@ -95,6 +99,7 @@ cc_binary {
     static_libs: [
         "libbsdiff",
         "libbspatch",
+        "libzucchini",
         "libdivsufsort",
         "libdivsufsort64",
         "libpuffdiff",
@@ -110,6 +115,7 @@ cc_test {
     srcs: [
         "src/bit_io_unittest.cc",
         "src/extent_stream.cc",
+        "src/integration_test.cc",
         "src/patching_unittest.cc",
         "src/puff_io_unittest.cc",
         "src/puffin_unittest.cc",
@@ -124,6 +130,7 @@ cc_test {
     static_libs: [
         "libbsdiff",
         "libbspatch",
+        "libzucchini",
         "libdivsufsort",
         "libdivsufsort64",
         "libpuffdiff",
