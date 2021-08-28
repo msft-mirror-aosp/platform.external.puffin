@@ -18,6 +18,7 @@
 #include "zucchini/zucchini.h"
 
 #include "puffin/src/file_stream.h"
+#include "puffin/src/include/puffin/brotli_util.h"
 #include "puffin/src/include/puffin/common.h"
 #include "puffin/src/include/puffin/puffer.h"
 #include "puffin/src/include/puffin/puffpatch.h"
@@ -165,14 +166,21 @@ bool PuffDiff(UniqueStreamPtr src,
 
     zucchini::EnsemblePatchWriter patch_writer(src_bytes, dst_bytes);
     auto status = zucchini::GenerateBuffer(src_bytes, dst_bytes, &patch_writer);
-    CHECK_EQ(zucchini::status::kStatusSuccess, status);
+    TEST_AND_RETURN_FALSE(status == zucchini::status::kStatusSuccess);
 
     Buffer zucchini_patch_buf(patch_writer.SerializedSize());
     patch_writer.SerializeInto(
         {zucchini_patch_buf.data(), zucchini_patch_buf.size()});
 
+    // Use brotli to compress the zucchini patch.
+    // TODO(197361113) respect the CompressorType parameter for zucchini.
+    Buffer compressed_patch;
+    TEST_AND_RETURN_FALSE(BrotliEncode(zucchini_patch_buf.data(),
+                                       zucchini_patch_buf.size(),
+                                       &compressed_patch));
+
     TEST_AND_RETURN_FALSE(CreatePatch(
-        zucchini_patch_buf, src_deflates, dst_deflates, src_puffs, dst_puffs,
+        compressed_patch, src_deflates, dst_deflates, src_puffs, dst_puffs,
         src_puff_buffer.size(), dst_puff_buffer.size(), patchAlgorithm, patch));
   } else {
     LOG(ERROR) << "unsupported type " << static_cast<int>(patchAlgorithm);
