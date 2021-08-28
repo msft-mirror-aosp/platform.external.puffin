@@ -50,8 +50,10 @@ cc_library_static {
         "puffin/src/puffin.proto",
         "src/bit_reader.cc",
         "src/bit_writer.cc",
+        "src/brotli_util.cc",
         "src/huffer.cc",
         "src/huffman_table.cc",
+        "src/memory_stream.cc",
         "src/puff_reader.cc",
         "src/puff_writer.cc",
         "src/puffer.cc",
@@ -75,7 +77,6 @@ cc_library_static {
     defaults: ["puffin_defaults"],
     srcs: [
         "src/file_stream.cc",
-        "src/memory_stream.cc",
         "src/puffdiff.cc",
         "src/utils.cc",
     ],
@@ -114,6 +115,7 @@ cc_test {
     cflags: ["-Wno-sign-compare"],
     srcs: [
         "src/bit_io_unittest.cc",
+        "src/brotli_util_unittest.cc",
         "src/extent_stream.cc",
         "src/integration_test.cc",
         "src/patching_unittest.cc",
