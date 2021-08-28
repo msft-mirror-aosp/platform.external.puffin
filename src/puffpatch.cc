@@ -17,11 +17,13 @@
 #include "zucchini/patch_reader.h"
 #include "zucchini/zucchini.h"
 
+#include "puffin/src/include/puffin/brotli_util.h"
 #include "puffin/src/include/puffin/common.h"
 #include "puffin/src/include/puffin/huffer.h"
 #include "puffin/src/include/puffin/puffer.h"
 #include "puffin/src/include/puffin/stream.h"
 #include "puffin/src/logging.h"
+#include "puffin/src/memory_stream.h"
 #include "puffin/src/puffin.pb.h"
 #include "puffin/src/puffin_stream.h"
 
@@ -159,8 +161,10 @@ bool ApplyZucchiniPatch(UniqueStreamPtr src_stream,
     bytes_wrote += write_size;
   }
   // Read the patch
-  auto patch_reader =
-      zucchini::EnsemblePatchReader::Create({patch_start, patch_size});
+  Buffer zucchini_patch;
+  TEST_AND_RETURN_FALSE(BrotliDecode(patch_start, patch_size, &zucchini_patch));
+  auto patch_reader = zucchini::EnsemblePatchReader::Create(
+      {zucchini_patch.data(), zucchini_patch.size()});
   if (!patch_reader.has_value()) {
     LOG(ERROR) << "Failed to parse the zucchini patch.";
     return false;
