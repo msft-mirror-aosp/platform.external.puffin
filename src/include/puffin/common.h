@@ -43,11 +43,17 @@ struct ByteExtent {
 };
 
 struct BitExtent {
-  BitExtent(uint64_t offset, uint64_t length)
+  constexpr BitExtent(uint64_t offset, uint64_t length)
       : offset(offset), length(length) {}
 
-  bool operator==(const BitExtent& other) const {
+  constexpr bool operator==(const BitExtent& other) const {
     return this->length == other.length && this->offset == other.offset;
+  }
+  constexpr bool operator<(const BitExtent& other) const {
+    if (offset != other.offset) {
+      return offset < other.offset;
+    }
+    return length < other.length;
   }
 
   uint64_t offset;
