@@ -20,14 +20,15 @@ constexpr auto kDefaultParamLgwin = 20;
 
 bool BrotliEncode(const uint8_t* input,
                   size_t input_size,
-                  UniqueStreamPtr output_stream) {
+                  UniqueStreamPtr output_stream,
+                  int quality) {
   std::unique_ptr<BrotliEncoderState, decltype(&BrotliEncoderDestroyInstance)>
       encoder(BrotliEncoderCreateInstance(nullptr, nullptr, nullptr),
               BrotliEncoderDestroyInstance);
   TEST_AND_RETURN_FALSE(encoder != nullptr);
 
   BrotliEncoderSetParameter(encoder.get(), BROTLI_PARAM_QUALITY,
-                            kDefaultParamQuality);
+                            quality);
   BrotliEncoderSetParameter(encoder.get(), BROTLI_PARAM_LGWIN,
                             kDefaultParamLgwin);
 
@@ -53,6 +54,13 @@ bool BrotliEncode(const uint8_t* input,
   }
 
   return true;
+}
+
+bool BrotliEncode(const uint8_t* input,
+                  size_t input_size,
+                  UniqueStreamPtr output_stream) {
+  return BrotliEncode(input, input_size, std::move(output_stream),
+                      kDefaultParamQuality);
 }
 
 bool BrotliEncode(const uint8_t* input,
