@@ -23,6 +23,13 @@ bool BrotliEncode(const uint8_t* input,
                   size_t input_size,
                   std::vector<uint8_t>* output);
 
+// Similar to the above, but quality controls how well the compression is
+// |quality| should be between 0 and 11
+bool BrotliEncode(const uint8_t* input,
+                  size_t input_size,
+                  UniqueStreamPtr output_stream,
+                  int quality);
+
 // Decompress |input_size| bytes of data with brotli, and write the result to
 // |output_stream|.
 bool BrotliDecode(const uint8_t* input,
