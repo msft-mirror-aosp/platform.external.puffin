@@ -12,12 +12,12 @@
 #include <string>
 #include <vector>
 
+#include "puffin/file_stream.h"
 #include "puffin/src/bit_reader.h"
-#include "puffin/src/file_stream.h"
 #include "puffin/src/include/puffin/common.h"
 #include "puffin/src/include/puffin/puffer.h"
 #include "puffin/src/logging.h"
-#include "puffin/src/memory_stream.h"
+#include "puffin/memory_stream.h"
 #include "puffin/src/puff_writer.h"
 
 using std::set;
