@@ -17,14 +17,14 @@
 #include "zucchini/patch_writer.h"
 #include "zucchini/zucchini.h"
 
-#include "puffin/src/file_stream.h"
+#include "puffin/file_stream.h"
 #include "puffin/src/include/puffin/brotli_util.h"
 #include "puffin/src/include/puffin/common.h"
 #include "puffin/src/include/puffin/puffer.h"
 #include "puffin/src/include/puffin/puffpatch.h"
 #include "puffin/src/include/puffin/utils.h"
 #include "puffin/src/logging.h"
-#include "puffin/src/memory_stream.h"
+#include "puffin/memory_stream.h"
 #include "puffin/src/puffin.pb.h"
 #include "puffin/src/puffin_stream.h"
 
