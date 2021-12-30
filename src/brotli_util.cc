@@ -7,7 +7,7 @@
 #include "brotli/decode.h"
 #include "brotli/encode.h"
 #include "puffin/src/logging.h"
-#include "puffin/src/memory_stream.h"
+#include "puffin/memory_stream.h"
 
 namespace puffin {
 
