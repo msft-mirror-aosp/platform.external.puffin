@@ -68,9 +68,7 @@ bool CreatePatch(const Buffer& bsdiff_patch,
   header.mutable_src()->set_puff_length(src_puff_size);
   header.mutable_dst()->set_puff_length(dst_puff_size);
 
-  const size_t header_size_long = header.ByteSizeLong();
-  TEST_AND_RETURN_FALSE(header_size_long <= UINT32_MAX);
-  const uint32_t header_size = header_size_long;
+  const uint32_t header_size = header.ByteSize();
 
   uint64_t offset = 0;
   patch->resize(kMagicLength + sizeof(header_size) + header_size +
