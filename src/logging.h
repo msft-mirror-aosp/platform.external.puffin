@@ -5,10 +5,7 @@
 #ifndef SRC_LOGGING_H_
 #define SRC_LOGGING_H_
 
-#if defined(BASE_VER) && BASE_VER >= 822064
-#include "base/check.h"  // CHECK-related macros are defined in base/check.h on Chrome OS.
-#include "base/logging.h"
-#elif USE_BRILLO
+#ifdef USE_BRILLO
 #include "base/logging.h"
 #else
 #include "glog/logging.h"
