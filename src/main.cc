@@ -14,6 +14,7 @@
 #endif
 
 #include "puffin/file_stream.h"
+#include "puffin/memory_stream.h"
 #include "puffin/src/extent_stream.h"
 #include "puffin/src/include/puffin/common.h"
 #include "puffin/src/include/puffin/huffer.h"
@@ -22,7 +23,6 @@
 #include "puffin/src/include/puffin/puffpatch.h"
 #include "puffin/src/include/puffin/utils.h"
 #include "puffin/src/logging.h"
-#include "puffin/memory_stream.h"
 #include "puffin/src/puffin_stream.h"
 
 using puffin::BitExtent;
