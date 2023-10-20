@@ -7,9 +7,9 @@
 #include "base/logging.h"
 #include "brillo/test_helpers.h"
 
+#include "puffin/memory_stream.h"
 #include "puffin/src/include/puffin/common.h"
 #include "puffin/src/include/puffin/puffpatch.h"
-#include "puffin/memory_stream.h"
 
 using puffin::BitExtent;
 using puffin::Buffer;
