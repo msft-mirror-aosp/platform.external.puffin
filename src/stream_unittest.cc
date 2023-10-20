@@ -7,10 +7,10 @@
 #include "gtest/gtest.h"
 
 #include "puffin/file_stream.h"
+#include "puffin/memory_stream.h"
 #include "puffin/src/extent_stream.h"
 #include "puffin/src/include/puffin/huffer.h"
 #include "puffin/src/include/puffin/puffer.h"
-#include "puffin/memory_stream.h"
 #include "puffin/src/puffin_stream.h"
 #include "puffin/src/unittest_common.h"
 
