@@ -1,4 +1,4 @@
-// Copyright 2018 The Chromium OS Authors. All rights reserved.
+// Copyright 2018 The ChromiumOS Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -7,9 +7,9 @@
 #include "base/logging.h"
 #include "brillo/test_helpers.h"
 
+#include "puffin/memory_stream.h"
 #include "puffin/src/include/puffin/common.h"
 #include "puffin/src/include/puffin/puffpatch.h"
-#include "puffin/memory_stream.h"
 
 using puffin::BitExtent;
 using puffin::Buffer;
