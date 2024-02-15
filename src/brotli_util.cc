@@ -1,4 +1,4 @@
-// Copyright 2021 The Chromium OS Authors. All rights reserved.
+// Copyright 2021 The ChromiumOS Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -6,8 +6,8 @@
 
 #include "brotli/decode.h"
 #include "brotli/encode.h"
-#include "puffin/src/logging.h"
 #include "puffin/memory_stream.h"
+#include "puffin/src/logging.h"
 
 namespace puffin {
 
@@ -27,8 +27,7 @@ bool BrotliEncode(const uint8_t* input,
               BrotliEncoderDestroyInstance);
   TEST_AND_RETURN_FALSE(encoder != nullptr);
 
-  BrotliEncoderSetParameter(encoder.get(), BROTLI_PARAM_QUALITY,
-                            quality);
+  BrotliEncoderSetParameter(encoder.get(), BROTLI_PARAM_QUALITY, quality);
   BrotliEncoderSetParameter(encoder.get(), BROTLI_PARAM_LGWIN,
                             kDefaultParamLgwin);
 

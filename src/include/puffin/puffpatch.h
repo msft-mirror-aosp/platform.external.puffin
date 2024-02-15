@@ -1,4 +1,4 @@
-// Copyright 2017 The Chromium OS Authors. All rights reserved.
+// Copyright 2017 The ChromiumOS Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -12,6 +12,7 @@ namespace puffin {
 
 extern const char kMagic[];
 extern const size_t kMagicLength;
+constexpr size_t kDefaultCacheSize = 64 * 1024;  // Total 64K cache.
 
 // Applies the puffin patch to deflate stream |src| to create deflate stream
 // |dst|. This function is used in the client and internally uses bspatch to
@@ -29,7 +30,7 @@ bool PuffPatch(UniqueStreamPtr src,
                UniqueStreamPtr dst,
                const uint8_t* patch,
                size_t patch_length,
-               size_t max_cache_size = 0);
+               size_t max_cache_size = kDefaultCacheSize);
 
 }  // namespace puffin
 

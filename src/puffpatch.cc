@@ -1,4 +1,4 @@
-// Copyright 2017 The Chromium OS Authors. All rights reserved.
+// Copyright 2017 The ChromiumOS Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -17,13 +17,13 @@
 #include "zucchini/patch_reader.h"
 #include "zucchini/zucchini.h"
 
+#include "puffin/memory_stream.h"
 #include "puffin/src/include/puffin/brotli_util.h"
 #include "puffin/src/include/puffin/common.h"
 #include "puffin/src/include/puffin/huffer.h"
 #include "puffin/src/include/puffin/puffer.h"
 #include "puffin/src/include/puffin/stream.h"
 #include "puffin/src/logging.h"
-#include "puffin/memory_stream.h"
 #include "puffin/src/puffin.pb.h"
 #include "puffin/src/puffin_stream.h"
 
