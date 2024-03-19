@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <memory>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -106,8 +105,7 @@ PuffinStream::PuffinStream(UniqueStreamPtr stream,
       extra_byte_(0),
       is_for_puff_(puffer_ ? true : false),
       closed_(false),
-      max_cache_size_(max_cache_size),
-      cur_cache_size_(0) {
+      lru_cache_(max_cache_size) {
   // Building upper bounds for faster seek.
   upper_bounds_.reserve(puffs.size());
   for (const auto& puff : puffs) {
@@ -134,9 +132,6 @@ PuffinStream::PuffinStream(UniqueStreamPtr stream,
     max_puff_length = std::max(max_puff_length, puff.length);
   }
   puff_buffer_.reset(new Buffer(max_puff_length + 1));
-  if (max_cache_size_ < max_puff_length) {
-    max_cache_size_ = 0;  // It means we are not caching puffs.
-  }
 
   uint64_t max_deflate_length = 0;
   for (const auto& deflate : deflates) {
@@ -262,12 +257,12 @@ bool PuffinStream::Read(void* buffer, size_t count) {
       auto end_byte = (cur_deflate_->offset + cur_deflate_->length + 7) / 8;
       auto bytes_to_read = end_byte - start_byte;
       // Puff directly to buffer if it has space.
-      bool puff_directly_into_buffer =
-          max_cache_size_ == 0 && (skip_bytes_ == 0) &&
+      const bool puff_directly_into_buffer =
+          lru_cache_.capacity() == 0 && (skip_bytes_ == 0) &&
           (length - bytes_read >= cur_puff_->length);
 
       auto cur_puff_idx = std::distance(puffs_.begin(), cur_puff_);
-      if (max_cache_size_ == 0 ||
+      if (lru_cache_.capacity() == 0 ||
           !GetPuffCache(cur_puff_idx, cur_puff_->length, &puff_buffer_)) {
         // Did not find the puff buffer in cache. We have to build it.
         deflate_buffer_->resize(bytes_to_read);
@@ -440,51 +435,65 @@ bool PuffinStream::SetExtraByte() {
 bool PuffinStream::GetPuffCache(int puff_id,
                                 uint64_t puff_size,
                                 shared_ptr<Buffer>* buffer) {
-  bool found = false;
   // Search for it.
-  std::pair<int, shared_ptr<Buffer>> cache;
-  // TODO(*): Find a faster way of doing this? Maybe change the data structure
-  // that supports faster search.
-  for (auto iter = caches_.begin(); iter != caches_.end(); ++iter) {
-    if (iter->first == puff_id) {
-      cache = std::move(*iter);
-      found = true;
-      // Remove it so later we can add it to the begining of the list.
-      caches_.erase(iter);
-      break;
-    }
-  }
+  shared_ptr<Buffer> cache = lru_cache_.get(puff_id);
+  const bool found = cache != nullptr;
 
   // If not found, either create one or get one from the list.
   if (!found) {
-    // If |caches_| were full, remove last ones in the list (least used), until
-    // we have enough space for the new cache.
-    while (!caches_.empty() && cur_cache_size_ + puff_size > max_cache_size_) {
-      cache = std::move(caches_.back());
-      caches_.pop_back();  // Remove it from the list.
-      cur_cache_size_ -= cache.second->capacity();
-    }
     // If we have not populated the cache yet, create one.
-    if (!cache.second) {
-      cache.second.reset(new Buffer(puff_size));
-    }
-    cache.second->resize(puff_size);
+    lru_cache_.EnsureSpace(puff_size);
+    cache = std::make_shared<Buffer>(puff_size);
 
-    constexpr uint64_t kMaxSizeDifference = 20 * 1024;
-    if (puff_size + kMaxSizeDifference < cache.second->capacity()) {
-      cache.second->shrink_to_fit();
-    }
-
-    cur_cache_size_ += cache.second->capacity();
-    cache.first = puff_id;
+    lru_cache_.put(puff_id, cache);
   }
 
-  *buffer = cache.second;
-  // By now we have either removed a cache or created new one. Now we have to
-  // insert it in the front of the list so it becomes the most recently used
-  // one.
-  caches_.push_front(std::move(cache));
+  *buffer = cache;
   return found;
+}
+
+const LRUCache::Value LRUCache::get(const LRUCache::Key& key) {
+  auto it = items_map_.find(key);
+  if (it == items_map_.end()) {
+    return nullptr;
+  }
+  items_list_.splice(items_list_.begin(), items_list_, it->second);
+  return it->second->second;
+}
+
+void LRUCache::put(const LRUCache::Key& key, const LRUCache::Value& value) {
+  auto it = items_map_.find(key);
+  if (it != items_map_.end()) {
+    cache_size_ -= it->second->second->capacity();
+    items_list_.erase(it->second);
+    items_map_.erase(it);
+  }
+  EnsureSpace(value->capacity());
+  cache_size_ += value->capacity();
+  items_list_.push_front(key_value_pair_t(key, value));
+  items_map_[key] = items_list_.begin();
+}
+
+void LRUCache::EvictLRUItem() {
+  if (items_list_.empty()) {
+    return;
+  }
+  auto last = items_list_.back();
+  cache_size_ -= last.second->capacity();
+  items_map_.erase(last.first);
+  items_list_.pop_back();
+}
+
+void LRUCache::EnsureSpace(size_t size) {
+  if (size > max_size_) {
+    items_list_.clear();
+    items_map_.clear();
+    cache_size_ = 0;
+    return;
+  }
+  while (cache_size_ + size > max_size_) {
+    EvictLRUItem();
+  }
 }
 
 }  // namespace puffin
