@@ -5,8 +5,7 @@
 #ifndef SRC_INCLUDE_PUFFIN_COMMON_H_
 #define SRC_INCLUDE_PUFFIN_COMMON_H_
 
-#include <functional>
-#include <memory>
+#include <ostream>
 #include <vector>
 
 #ifndef DISALLOW_COPY_AND_ASSIGN

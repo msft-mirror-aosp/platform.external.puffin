@@ -110,6 +110,7 @@ cc_binary {
 
 cc_test {
     name: "puffin_unittest",
+    host_supported: true,
     defaults: ["puffin_defaults"],
     test_suites: ["device-tests"],
     cflags: ["-Wno-sign-compare"],
