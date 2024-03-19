@@ -7,7 +7,7 @@
 
 #include <list>
 #include <memory>
-#include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -17,6 +17,38 @@
 #include "puffin/src/include/puffin/stream.h"
 
 namespace puffin {
+
+class LRUCache {
+ public:
+  using Key = int;
+  using Value = std::shared_ptr<Buffer>;
+  typedef typename std::pair<Key, Value> key_value_pair_t;
+  typedef typename std::list<key_value_pair_t>::iterator iterator;
+
+  LRUCache(size_t max_size) : max_size_(max_size) {}
+
+  void put(const Key& key, const Value& value);
+
+  void EvictLRUItem();
+
+  // Ensure that cache has sufficient space for a new item of |size| bytes
+  void EnsureSpace(size_t size);
+
+  const Value get(const Key& key);
+
+  bool exists(const Key& key) const {
+    return items_map_.find(key) != items_map_.end();
+  }
+
+  size_t size() const { return cache_size_; }
+  size_t capacity() const { return max_size_; }
+
+ private:
+  std::list<key_value_pair_t> items_list_;
+  std::unordered_map<Key, iterator> items_map_;
+  size_t cache_size_ = 0;
+  size_t max_size_;
+};
 
 // A class for puffing a deflate stream and huffing into a deflate stream. The
 // puff stream is "imaginary", which means it doesn't really exists; It is build
@@ -154,13 +186,8 @@ class PuffinStream : public StreamInterface {
   std::unique_ptr<Buffer> deflate_buffer_;
   std::shared_ptr<Buffer> puff_buffer_;
 
-  // The list of puff buffer caches.
-  std::list<std::pair<int, std::shared_ptr<Buffer>>> caches_;
-  // The maximum memory (in bytes) kept for caching puff buffers by an object of
-  // this class.
-  size_t max_cache_size_;
-  // The current amount of memory (in bytes) used for caching puff buffers.
-  uint64_t cur_cache_size_;
+  // The LRU cache for holding puff data
+  LRUCache lru_cache_;
 
   DISALLOW_COPY_AND_ASSIGN(PuffinStream);
 };
