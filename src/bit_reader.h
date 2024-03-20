@@ -7,6 +7,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 
 #include "puffin/src/include/puffin/common.h"
 
