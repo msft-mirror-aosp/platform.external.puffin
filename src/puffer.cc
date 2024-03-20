@@ -4,16 +4,13 @@
 
 #include "puffin/src/include/puffin/puffer.h"
 
-#include <algorithm>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "puffin/src/bit_reader.h"
 #include "puffin/src/huffman_table.h"
 #include "puffin/src/include/puffin/common.h"
-#include "puffin/src/include/puffin/stream.h"
 #include "puffin/src/logging.h"
 #include "puffin/src/puff_data.h"
 #include "puffin/src/puff_writer.h"
