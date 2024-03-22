@@ -5,10 +5,8 @@
 #ifndef SRC_PUFFIN_STREAM_H_
 #define SRC_PUFFIN_STREAM_H_
 
-#include <filesystem>
 #include <list>
 #include <memory>
-#include <set>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -27,13 +25,11 @@ class LRUCache {
   typedef typename std::pair<Key, Value> key_value_pair_t;
   typedef typename std::list<key_value_pair_t>::iterator iterator;
 
-  LRUCache(size_t max_size);
-  ~LRUCache();
-  LRUCache(const LRUCache&) = delete;
+  LRUCache(size_t max_size) : max_size_(max_size) {}
 
   void put(const Key& key, const Value& value);
 
-  bool EvictLRUItem();
+  void EvictLRUItem();
 
   // Ensure that cache has sufficient space for a new item of |size| bytes
   void EnsureSpace(size_t size);
@@ -48,14 +44,10 @@ class LRUCache {
   size_t capacity() const { return max_size_; }
 
  private:
-  bool WriteToDisk(const Key& key, const Value& value);
-  Value ReadFromDisk(const Key& key);
   std::list<key_value_pair_t> items_list_;
   std::unordered_map<Key, iterator> items_map_;
   size_t cache_size_ = 0;
   size_t max_size_;
-  std::filesystem::path tmpdir_;
-  std::set<Key> ondisk_items_;
 };
 
 // A class for puffing a deflate stream and huffing into a deflate stream. The
