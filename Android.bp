@@ -62,6 +62,7 @@ cc_library_static {
     ],
     static_libs: [
         "libbspatch",
+        "libc++fs",
     ],
     whole_static_libs: [
         "libzucchini",
@@ -84,6 +85,7 @@ cc_library_static {
         "libbsdiff",
         "libzucchini",
         "libpuffpatch",
+        "libc++fs",
     ],
 }
 
@@ -105,11 +107,13 @@ cc_binary {
         "libdivsufsort64",
         "libpuffdiff",
         "libpuffpatch",
+        "libc++fs",
     ],
 }
 
 cc_test {
     name: "puffin_unittest",
+    host_supported: true,
     defaults: ["puffin_defaults"],
     test_suites: ["device-tests"],
     cflags: ["-Wno-sign-compare"],
@@ -137,5 +141,6 @@ cc_test {
         "libdivsufsort64",
         "libpuffdiff",
         "libpuffpatch",
+        "libc++fs",
     ],
 }
