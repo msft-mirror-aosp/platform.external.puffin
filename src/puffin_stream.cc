@@ -3,9 +3,13 @@
 // found in the LICENSE file.
 
 #include "puffin/src/puffin_stream.h"
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #include <algorithm>
+#include <filesystem>
 #include <memory>
+#include <system_error>
 #include <utility>
 #include <vector>
 
@@ -448,17 +452,82 @@ bool PuffinStream::GetPuffCache(int puff_id,
     lru_cache_.put(puff_id, cache);
   }
 
-  *buffer = cache;
+  *buffer = std::move(cache);
   return found;
 }
 
-const LRUCache::Value LRUCache::get(const LRUCache::Key& key) {
+const LRUCache::Value LRUCache::get(const Key& key) {
   auto it = items_map_.find(key);
   if (it == items_map_.end()) {
+    if (ondisk_items_.count(key) > 0) {
+      auto&& data = ReadFromDisk(key);
+      put(key, data);
+      return data;
+    }
     return nullptr;
   }
   items_list_.splice(items_list_.begin(), items_list_, it->second);
   return it->second->second;
+}
+
+LRUCache::Value LRUCache::ReadFromDisk(const LRUCache::Key& key) {
+  const auto path = tmpdir_ / std::to_string(key);
+  int fd = open(path.c_str(), O_RDONLY | O_CLOEXEC);
+  if (fd < 0) {
+    PLOG(ERROR) << "Failed to open " << path;
+    return {};
+  }
+  auto fd_delete = [](int* fd) { close(*fd); };
+  std::unique_ptr<int, decltype(fd_delete)> guard(&fd, fd_delete);
+  struct stat st {};
+  const int ret = stat(path.c_str(), &st);
+  if (ret < 0) {
+    PLOG(ERROR) << "Failed to stat " << path << " ret: " << ret;
+    return {};
+  }
+  LRUCache::Value data = std::make_shared<std::vector<uint8_t>>(st.st_size);
+  const auto bytes_read =
+      TEMP_FAILURE_RETRY(pread(fd, data->data(), data->size(), 0));
+  if (static_cast<size_t>(bytes_read) != data->size()) {
+    PLOG(ERROR) << "Failed to read " << data->size() << " bytes data from "
+                << path;
+    return {};
+  }
+  return data;
+}
+
+LRUCache::~LRUCache() {
+  std::error_code ec;
+  std::filesystem::remove_all(tmpdir_, ec);
+  if (ec) {
+    LOG(ERROR) << "Failed to rm -rf " << tmpdir_ << " " << ec.message();
+  }
+}
+
+bool LRUCache::WriteToDisk(const LRUCache::Key& key,
+                           const LRUCache::Value& value) {
+  if (tmpdir_.empty()) {
+    return false;
+  }
+  const auto path = tmpdir_ / std::to_string(key);
+  int fd = open(path.c_str(), O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC, 0644);
+  if (fd < 0) {
+    PLOG(ERROR) << "Failed to open " << path;
+    return false;
+  }
+  auto fd_delete = [](int* fd) { close(*fd); };
+  std::unique_ptr<int, decltype(fd_delete)> guard(&fd, fd_delete);
+  const auto written =
+      TEMP_FAILURE_RETRY(write(fd, value->data(), value->size()));
+  if (static_cast<size_t>(written) != value->size()) {
+    PLOG(ERROR) << "Failed to write " << value->size() << " bytes data to "
+                << path;
+    return false;
+  }
+  close(fd);
+  guard.release();
+  ondisk_items_.insert(key);
+  return true;
 }
 
 void LRUCache::put(const LRUCache::Key& key, const LRUCache::Value& value) {
@@ -474,26 +543,52 @@ void LRUCache::put(const LRUCache::Key& key, const LRUCache::Value& value) {
   items_map_[key] = items_list_.begin();
 }
 
-void LRUCache::EvictLRUItem() {
+bool LRUCache::EvictLRUItem() {
   if (items_list_.empty()) {
-    return;
+    return false;
   }
-  auto last = items_list_.back();
+  const auto last = items_list_.back();
   cache_size_ -= last.second->capacity();
+  // Only write puffs large enough to disk, as disk writes have latency.
+  if (last.second->size() > 16 * 1024) {
+    WriteToDisk(last.first, last.second);
+  }
   items_map_.erase(last.first);
   items_list_.pop_back();
+  return true;
 }
 
 void LRUCache::EnsureSpace(size_t size) {
-  if (size > max_size_) {
-    items_list_.clear();
-    items_map_.clear();
-    cache_size_ = 0;
+  while (cache_size_ + size > max_size_) {
+    if (!EvictLRUItem()) {
+      return;
+    }
+  }
+}
+
+const char* GetTempDir() {
+  const char* tmpdir = getenv("TMPDIR");
+  if (tmpdir != nullptr) {
+    return tmpdir;
+  }
+  return "/tmp";
+}
+
+LRUCache::LRUCache(size_t max_size) : max_size_(max_size) {
+  std::error_code ec;
+  auto buffer = GetTempDir() + std::string("/lru.XXXXXX");
+  if (ec) {
+    LOG(ERROR) << "Failed to get temp directory for LRU cache " << ec.message()
+               << " " << ec.value();
     return;
   }
-  while (cache_size_ + size > max_size_) {
-    EvictLRUItem();
+  const char* dirname = mkdtemp(buffer.data());
+  if (dirname == nullptr) {
+    LOG(ERROR) << "Failed to mkdtemp " << buffer;
+    return;
   }
+
+  tmpdir_ = dirname;
 }
 
 }  // namespace puffin
