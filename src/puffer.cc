@@ -1,19 +1,16 @@
-// Copyright 2017 The Chromium OS Authors. All rights reserved.
+// Copyright 2017 The ChromiumOS Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 #include "puffin/src/include/puffin/puffer.h"
 
-#include <algorithm>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "puffin/src/bit_reader.h"
 #include "puffin/src/huffman_table.h"
 #include "puffin/src/include/puffin/common.h"
-#include "puffin/src/include/puffin/stream.h"
 #include "puffin/src/logging.h"
 #include "puffin/src/puff_data.h"
 #include "puffin/src/puff_writer.h"
