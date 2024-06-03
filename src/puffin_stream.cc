@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <memory>
+#include <system_error>
 #include <utility>
 #include <vector>
 
@@ -496,7 +497,11 @@ LRUCache::Value LRUCache::ReadFromDisk(const LRUCache::Key& key) {
 }
 
 LRUCache::~LRUCache() {
-  std::filesystem::remove_all(tmpdir_);
+  std::error_code ec;
+  std::filesystem::remove_all(tmpdir_, ec);
+  if (ec) {
+    LOG(ERROR) << "Failed to rm -rf " << tmpdir_ << " " << ec.message();
+  }
 }
 
 bool LRUCache::WriteToDisk(const LRUCache::Key& key,
@@ -554,11 +559,6 @@ bool LRUCache::EvictLRUItem() {
 }
 
 void LRUCache::EnsureSpace(size_t size) {
-  if (size > max_size_) {
-    while (EvictLRUItem())
-      ;
-    return;
-  }
   while (cache_size_ + size > max_size_) {
     if (!EvictLRUItem()) {
       return;
@@ -566,15 +566,29 @@ void LRUCache::EnsureSpace(size_t size) {
   }
 }
 
+const char* GetTempDir() {
+  const char* tmpdir = getenv("TMPDIR");
+  if (tmpdir != nullptr) {
+    return tmpdir;
+  }
+  return "/tmp";
+}
+
 LRUCache::LRUCache(size_t max_size) : max_size_(max_size) {
-  std::string buffer = std::filesystem::temp_directory_path() / "lru.XXXXXX";
-  const char* dirname = mkdtemp(buffer.data());
-  if (dirname == nullptr) {
-    LOG(ERROR) << "Failed to create a unique temporary dir";
+  std::error_code ec;
+  auto buffer = GetTempDir() + std::string("/lru.XXXXXX");
+  if (ec) {
+    LOG(ERROR) << "Failed to get temp directory for LRU cache " << ec.message()
+               << " " << ec.value();
     return;
   }
+  const char* dirname = mkdtemp(buffer.data());
+  if (dirname == nullptr) {
+    LOG(ERROR) << "Failed to mkdtemp " << buffer;
+    return;
+  }
+
   tmpdir_ = dirname;
-  std::filesystem::create_directory(tmpdir_);
 }
 
 }  // namespace puffin
