@@ -1,12 +1,11 @@
-// Copyright 2017 The Chromium OS Authors. All rights reserved.
+// Copyright 2017 The ChromiumOS Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 #ifndef SRC_INCLUDE_PUFFIN_COMMON_H_
 #define SRC_INCLUDE_PUFFIN_COMMON_H_
 
-#include <functional>
-#include <memory>
+#include <ostream>
 #include <vector>
 
 #ifndef DISALLOW_COPY_AND_ASSIGN
