@@ -6,3 +6,4 @@ zhangkelvin@google.com
 
 # Chrome OS
 kimjae@google.com
+include platform/system/core:/janitors/OWNERS #{LAST_RESORT_SUGGESTION}
