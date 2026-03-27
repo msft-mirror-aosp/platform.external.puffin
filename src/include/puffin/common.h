@@ -49,6 +49,7 @@ struct ByteExtent {
 };
 
 struct BitExtent {
+  constexpr BitExtent() : offset(0), length(0) {}
   constexpr BitExtent(uint64_t offset, uint64_t length)
       : offset(offset), length(length) {}
 
