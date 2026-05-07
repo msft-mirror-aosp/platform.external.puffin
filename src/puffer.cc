@@ -175,6 +175,15 @@ bool Puffer::PuffDeflate(BitReaderInterface* br,
           br->DropBits(extra_bits_len);
         }
         auto length = kLengthBases[len_code_start] + extra_bits_value;
+        if (length == 258 && extra_bits_value == 31) {
+          LOG(ERROR)
+              << "Non-standard encoding for length 258 using base len "
+                 "227 and 5 extra bits is not allowed. Puffin requires the "
+                 "standard encoding (https://www.ietf.org/rfc/rfc1951.txt), "
+                 "which encodes length 258 using base len 258 and 0 extra "
+                 "bits to ensure bit-level reconstructability.";
+          return false;
+        }
 
         auto bits_to_cache = cur_ht->DistanceMaxBits();
         if (!br->CacheBits(bits_to_cache)) {
