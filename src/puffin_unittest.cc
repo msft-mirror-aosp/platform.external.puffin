@@ -2,11 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include <algorithm>
 #include <string>
 #include <vector>
 
 #include "gtest/gtest.h"
+
+#include <memory>
 
 #include "puffin/memory_stream.h"
 #include "puffin/src/bit_reader.h"
@@ -601,6 +602,38 @@ TEST_F(PuffinTest, NoExcludeBadDistanceCaches) {
                   // be false.
   EXPECT_TRUE(puffer.PuffDeflate(&br, &pw, &deflates));
   EXPECT_EQ(deflates, kProblematicCacheDeflateExtents);
+}
+
+TEST_F(PuffinTest, PuffHuffDeflateBinTest) {
+  // A minimal byte array to trigger the "Non-standard encoding" edge case.
+  // This stream encodes a DEFLATE block that uses symbol 284 with 5 extra bits
+  // (value 31) to represent length 258.
+  const Buffer deflate_buffer = {0x73, 0x1c, 0xf9, 0x00, 0x00};
+
+  BufferBitReader bit_reader(deflate_buffer.data(), deflate_buffer.size());
+  BufferPuffWriter puff_writer(nullptr, 0);
+  vector<BitExtent> deflates;
+
+  // puffdiff should either reject this stream as invalid input
+  // or puff and huff it back to the same deflate stream.
+  // It should report success in puff and later fails to huff.
+  if (!puffer_.PuffDeflate(&bit_reader, &puff_writer, &deflates)) {
+    return;
+  }
+
+  uint64_t puff_size = puff_writer.Size();
+  Buffer puff_buffer(puff_size);
+  BufferPuffWriter puff_writer2(puff_buffer.data(), puff_size);
+  BufferBitReader bit_reader2(deflate_buffer.data(), deflate_buffer.size());
+  ASSERT_TRUE(puffer_.PuffDeflate(&bit_reader2, &puff_writer2, nullptr));
+
+  Buffer out_deflate_buffer(deflate_buffer.size());
+  BufferBitWriter bit_writer(out_deflate_buffer.data(), deflate_buffer.size());
+  BufferPuffReader puff_reader(puff_buffer.data(), puff_size);
+
+  ASSERT_TRUE(huffer_.HuffDeflate(&puff_reader, &bit_writer));
+  ASSERT_EQ(bit_writer.Size(), deflate_buffer.size());
+  ASSERT_EQ(deflate_buffer, out_deflate_buffer);
 }
 
 }  // namespace puffin

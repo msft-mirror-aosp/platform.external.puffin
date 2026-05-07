@@ -382,7 +382,7 @@ bool PuffinStream::Write(const void* buffer, size_t count) {
         last_byte_ = 0;
 
         TEST_AND_RETURN_FALSE(huffer_->HuffDeflate(&puff_reader, &bit_writer));
-        TEST_AND_RETURN_FALSE(bit_writer.Size() == bytes_to_write);
+        TEST_EQ(bit_writer.Size(), bytes_to_write);
         TEST_AND_RETURN_FALSE(puff_reader.BytesLeft() == 0);
 
         deflate_bit_pos_ = cur_deflate_->offset + cur_deflate_->length;

@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <numeric>
 #include <set>
 #include <string>
 #include <vector>
@@ -336,6 +337,14 @@ bool LocateDeflatesInZipArchive(const Buffer& data,
     deflates->insert(deflates->end(), tmp_deflates.begin(), tmp_deflates.end());
     pos += header_size + calculated_compressed_size;
   }
+  LOG(INFO) << "Total deflates found in zip archive: " << deflates->size();
+  LOG(INFO) << "Total size of deflates found in zip archive: "
+            << std::accumulate(deflates->begin(), deflates->end(), 0ULL,
+                               [](uint64_t sum, const BitExtent& deflate) {
+                                 return sum + deflate.length;
+                               }) /
+                   8 / 1024.0f
+            << " KB";
 
   return true;
 }
